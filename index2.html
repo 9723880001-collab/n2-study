@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="JLPT N2真题" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>JLPT N2 真题模考室（PDF+MP3 · 2026.12预测5套）</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    html, body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans SC", sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-tap-highlight-color: rgba(79,70,229,0.12);
+      touch-action: manipulation;
+    }
+    button, select, input, label { touch-action: manipulation; }
+    .hidden { display: none !important; }
+    .jp-text { line-height: 1.85; }
+    .jp-text u { text-decoration: none; border-bottom: 2px solid #2563eb; padding-bottom: 1px; font-weight: 700; color: #1e3a8a; }
+    .star-slot { display: inline-block; min-width: 2.2rem; border-bottom: 2px solid #64748b; text-align: center; margin: 0 3px; font-weight: 700; }
+    .star-slot.is-star { border-bottom-color: #e11d48; color: #e11d48; }
+    .safe-bottom { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom)); }
+    .file-btn-wrap { position: relative; overflow: hidden; }
+    .file-btn-input {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      opacity: 0; cursor: pointer; z-index: 10; font-size: 40px;
+    }
+    #pdf-canvas-wrap canvas {
+      max-width: 100%; height: auto !important; display: block;
+      margin: 0 auto; box-shadow: 0 2px 10px rgba(15,23,42,.15); background: #fff;
+    }
+    #toast-bar {
+      position: fixed; top: 68px; left: 50%; transform: translateX(-50%);
+      z-index: 90; pointer-events: none; transition: opacity .25s;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- 顶栏 -->
+  <header class="sticky top-0 z-40 bg-slate-900 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between py-2.5 gap-2">
+        <button type="button" onclick="switchTab('pdfroom')" class="flex items-center gap-2.5 text-left min-w-0">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-indigo-600 flex items-center justify-center font-bold text-base shadow shrink-0">N2</div>
+          <div class="min-w-0">
+            <div class="font-bold text-sm sm:text-base leading-tight truncate">JLPT N2 真题模考室（修复版）</div>
+            <div class="text-[11px] text-slate-300 truncate">PDF+真人MP3 · 2026.12预测5套 · CEFR评分</div>
+          </div>
+        </button>
+
+        <nav class="hidden md:flex items-center gap-1 text-sm">
+          <button type="button" id="nav-pdfroom" onclick="switchTab('pdfroom')" class="px-3 py-2 rounded-lg font-medium">📄 PDF+MP3模考</button>
+          <button type="button" id="nav-predict" onclick="switchTab('predict')" class="px-3 py-2 rounded-lg font-medium">🎯 预测5套</button>
+          <button type="button" id="nav-archive" onclick="switchTab('archive')" class="px-3 py-2 rounded-lg font-medium">📚 真题32期</button>
+          <button type="button" id="nav-mistakes" onclick="switchTab('mistakes')" class="px-3 py-2 rounded-lg font-medium flex items-center gap-1">
+            📕 错题集 <span id="mistake-badge" class="px-1.5 py-0.5 text-xs rounded-full bg-rose-500 text-white font-bold">0</span>
+          </button>
+          <button type="button" id="nav-manage" onclick="switchTab('manage')" class="px-3 py-2 rounded-lg font-medium">⚙️ 导入/备份</button>
+        </nav>
+
+        <div class="md:hidden">
+          <button type="button" onclick="switchTab('mistakes')" class="px-2.5 py-1 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-200 text-xs font-semibold">
+            错题 <span id="mistake-badge-top" class="font-bold text-white">0</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 实时操作反馈 Toast -->
+  <div id="toast-bar" class="hidden px-4 py-2 rounded-full bg-slate-900/90 text-white text-xs font-semibold shadow-xl"></div>
+
+  <!-- 主内容区（如果浏览器屏蔽了JS，用户会直接看到下面这条红框提醒） -->
+  <main id="app-root" class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 pb-28 md:pb-8">
+    <div style="background:#fff1f2;border:2px solid #fb7185;color:#9f1239;padding:18px;border-radius:16px;line-height:1.8;font-size:14px;">
+      <strong>⚠️ 当前打开方式禁用了所有网页按钮！</strong><br/>
+      如果你是在苹果手机自带的<strong>「文件」App</strong>里直接点开了 <code>index.html</code>，苹果系统会强制屏蔽所有按钮和听力。<br/>
+      ✅ 请用手机 <strong>Safari</strong> 打开 <code>https://app.netlify.com/drop</code> 或 <code>https://tiiny.host</code>，上传本文件生成网址后再打开，所有按钮就会立刻好用！
+    </div>
+  </main>
+
+  <!-- 手机底部导航栏 -->
+  <nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 shadow-lg safe-bottom">
+    <div class="grid grid-cols-5 text-[10px] font-medium pt-1.5">
+      <button type="button" id="mnav-pdfroom" onclick="switchTab('pdfroom')" class="flex flex-col items-center py-1 gap-0.5 text-slate-500">
+        <span class="text-base leading-none">📄</span><span>PDF模考</span>
+      </button>
+      <button type="button" id="mnav-predict" onclick="switchTab('predict')" class="flex flex-col items-center py-1 gap-0.5 text-slate-500">
+        <span class="text-base leading-none">🎯</span><span>预测5套</span>
+      </button>
+      <button type="button" id="mnav-archive" onclick="switchTab('archive')" class="flex flex-col items-center py-1 gap-0.5 text-slate-500">
+        <span class="text-base leading-none">📚</span><span>历年32期</span>
+      </button>
+      <button type="button" id="mnav-mistakes" onclick="switchTab('mistakes')" class="relative flex flex-col items-center py-1 gap-0.5 text-slate-500">
+        <span class="text-base leading-none">📕</span><span>错题集</span>
+        <span id="mistake-badge-mobile" class="hidden absolute top-0.5 right-3 min-w-[15px] h-3.5 px-1 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center">0</span>
+      </button>
+      <button type="button" id="mnav-manage" onclick="switchTab('manage')" class="flex flex-col items-center py-1 gap-0.5 text-slate-500">
+        <span class="text-base leading-none">⚙️</span><span>导入备份</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- JSON 导入弹窗 -->
+  <div id="import-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-5 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-3">
+        <h3 id="import-modal-title" class="text-base font-bold text-slate-900">导入试卷 JSON 数据</h3>
+        <button type="button" onclick="closeImportModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none px-2">&times;</button>
+      </div>
+      <div class="flex flex-wrap gap-2 mb-3">
+        <div class="file-btn-wrap px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-200">
+          <span>📂 选择 JSON 文件</span>
+          <input type="file" class="file-btn-input" onchange="handleJsonFileUpload(event)" />
+        </div>
+        <button type="button" onclick="downloadJsonTemplate()" class="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-xs font-medium">⬇️ 下载模板</button>
+      </div>
+      <textarea id="json-textarea" rows="10" class="w-full font-mono text-xs border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="直接粘贴试卷 JSON（单套对象或数组）..."></textarea>
+      <div id="import-error" class="text-xs text-rose-600 mt-2 hidden"></div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button type="button" onclick="closeImportModal()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm">取消</button>
+        <button type="button" onclick="confirmImportJson()" class="px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold">确认导入</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// 全局防静默报错：如果手机端发生任何异常，立即在顶部提示
+window.onerror = function(msg) {
+  showToast('⚠️ 提示：' + msg, 4000);
+};
+
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+let toastTimer = null;
+function showToast(msg, ms = 2200) {
+  const el = document.getElementById('toast-bar');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.add('hidden'), ms);
+}
+
+/* =========================================================================
+   1. 2010.07 - 2026.07 历年考次时间轴
+   ========================================================================= */
+const TIMELINE_SESSIONS = (() => {
+  const list = [];
+  for (let year = 2026; year >= 2010; year--) {
+    const months = year === 2026 ? ['07'] : ['12', '07'];
+    for (const month of months) {
+      const id = `${year}-${month}`;
+      const cancelled = (year === 2020 && month === '07');
+      list.push({
+        id, year, month,
+        label: `${year}年${parseInt(month, 10)}月`,
+        cancelled,
+        note: cancelled ? '因疫情全球停考'
+          : (id === '2010-07' ? '改革元年首考'
+          : (id === '2025-12' ? '引入CEFR等级'
+          : (id === '2026-07' ? '最新真题' : '')))
+      });
+    }
+  }
+  return list;
+})();
+
+/* =========================================================================
+   2. 安全 IndexedDB 缓存（永不阻塞页面、永不因无痕模式崩溃）
+   ========================================================================= */
+const DB_NAME = 'jlpt_n2_media_cache_v2';
+const STORE_NAME = 'files';
+
+function openMediaDb() {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) return reject(new Error('no indexedDB'));
+    const timer = setTimeout(() => reject(new Error('db timeout')), 2000);
+    try {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        if (!req.result.objectStoreNames.contains(STORE_NAME)) req.result.createObjectStore(STORE_NAME);
+      };
+      req.onsuccess = () => { clearTimeout(timer); resolve(req.result); };
+      req.onerror = () => { clearTimeout(timer); reject(req.error); };
+    } catch (e) { clearTimeout(timer); reject(e); }
+  });
+}
+
+async function dbPutFileSafe(key, fileObj) {
+  try {
+    const db = await openMediaDb();
+    const buf = await fileObj.arrayBuffer();
+    const blob = new Blob([buf], { type: fileObj.type || 'application/octet-stream' });
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).put({ name: fileObj.name, type: blob.type, size: fileObj.size, blob, savedAt: Date.now() }, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+    return true;
+  } catch (e) { return false; }
+}
+
+async function dbGetFileSafe(key) {
+  try {
+    const db = await openMediaDb();
+    return await new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const req = tx.objectStore(STORE_NAME).get(key);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch (e) { return null; }
+}
+
+async function dbDeleteByPrefixSafe(prefix) {
+  try {
+    const db = await openMediaDb();
+    await new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.openCursor();
+      req.onsuccess = (e) => {
+        const c = e.target.result;
+        if (c) { if (String(c.key).startsWith(prefix)) c.delete(); c.continue(); }
+      };
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    });
+  } catch (e) {}
+}
+
+async function dbListKeysSafe() {
+  try {
+    const db = await openMediaDb();
+    return await new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const req = tx.objectStore(STORE_NAME).getAllKeys();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => resolve([]);
+    });
+  } catch (e) { return []; }
+}
+
+/* =========================================================================
+   3. 内置 5 套 2026年12月 预测模拟卷（全含日语听力 + 四选项逐项解析）
+   ========================================================================= */
+const BUILTIN_PAPERS = [
+  {
+    id: 'predict-1', category: 'predict',
+    title: '2026年12月 N2 预测模拟卷 · 第1套',
+    subtitle: '含听力｜相違 · ますます · あっさり · かねない · AI短文 · 职场任务听力',
+    durationMin: 30, difficulty: '★★★★☆ 实战基准',
+    questions: [
+      { id: 'p1-q1', section: '文字・語彙', qType: '問題1 漢字読み', stem: '会議で出された意見の<u>相違</u>点について、もう一度話し合う必要がある。', options: [
+        { text: 'そうい', tag: '正解｜音读词汇', detail: '「相違（そうい）」意为差异、分歧。「相」读清音そう。' },
+        { text: 'しょうい', tag: '干扰项｜多音混淆', detail: '「相」在首相读しょう，但相違固定读そうい。' },
+        { text: 'そうちがい', tag: '干扰项｜重箱读法', detail: '「違」不可训读。' },
+        { text: 'しょうちがい', tag: '干扰项｜音训混读', detail: '干扰造词。' }
+      ], answer: 0, explanation: '「相違点（そういてん）」与「同意（どうい）」对比记。' },
+      { id: 'p1-q2', section: '文字・語彙', qType: '問題4 文脈規定', stem: '最近の物価上昇により、家計の負担が（　　）大きくなっている。', options: [
+        { text: 'ますます', tag: '正解｜程度递进', detail: '意为越来越、更加，常配「大きくなる・増える」。' },
+        { text: 'たまたま', tag: '干扰项｜偶然', detail: '意为碰巧。' },
+        { text: 'いよいよ', tag: '干扰项｜节点临近', detail: '意为眼看就要。' },
+        { text: 'とうとう', tag: '干扰项｜最终结果', detail: '多接已完成结果～てしまった。' }
+      ], answer: 0, explanation: '持续加深优先选「ますます」。' },
+      { id: 'p1-q3', section: '文字・語彙', qType: '問題5 言い換え類義', stem: '部長は彼の提案を<u>あっさり</u>と断った。', options: [
+        { text: '簡単に', tag: '正解｜干脆轻易', detail: '「あっさり」形容动作时指干脆、不拖泥带水。' },
+        { text: '丁寧に', tag: '干扰项｜礼貌细致', detail: '语义不符。' },
+        { text: '厳しく', tag: '干扰项｜严厉', detail: '非严厉斥责。' },
+        { text: 'しつこく', tag: '干扰项｜反义词', detail: '意为纠缠不休。' }
+      ], answer: 0, explanation: '高频拟态词「あっさり断る＝簡単に断る」。' },
+      { id: 'p1-q4', section: '文法', qType: '問題7 文の文法1', stem: 'そんなに無理をして働き続けたら、体を壊し（　　）よ。少し休んだほうがいい。', options: [
+        { text: 'かねない', tag: '正解｜Vます形＋かねない', detail: '意为很有可能发生不好的结果。' },
+        { text: 'かねる', tag: '干扰项｜难以做到', detail: '多用于商务委婉拒绝。' },
+        { text: 'っこない', tag: '干扰项｜绝不可能', detail: '意思相反。' },
+        { text: 'がたい', tag: '干扰项｜心理难以', detail: '如信じがたい。' }
+      ], answer: 0, explanation: '区分「かねない（可能出坏事）」与「かねる（难以做到）」。' },
+      { id: 'p1-q5', section: '文法', qType: '問題8 並べ替え★', stem: 'この町の図書館は、<span class="star-slot"> 1 </span><span class="star-slot"> 2 </span><span class="star-slot is-star"> ★ </span><span class="star-slot"> 4 </span>多くの市民に利用されている。', options: [
+        { text: '幅広い世代に', tag: '正解(★第3位)｜被动对象', detail: '排第3位（★），修饰親しまれており。' },
+        { text: '親しまれており、', tag: '第4位｜书面中顿', detail: '排第4位。' },
+        { text: '子どもから', tag: '第1位｜范围起点', detail: '排第1位。' },
+        { text: '高齢者に至るまで', tag: '第2位｜～に至るまで', detail: '排第2位，固定句型AからBに至るまで。' }
+      ], answer: 0, explanation: '排序：3→4→1★→2。' },
+      { id: 'p1-q6', section: '読解', qType: '問題10 短文理解', passage: '近年、生成AIの急速な普及により、膨大な情報から瞬時に答えを得ることが可能になった。しかし、AIが出す答えの質は、私たちがどのような問いを投げかけるかに大きく左右される。つまり、これからの時代に本当に求められるのは、知識を丸暗記する力ではなく、課題の本質を見抜き、的確な問いを立てる力なのである。', stem: '筆者の考えに最も近いものはどれか。', options: [
+        { text: 'AIの普及によって、人間が知識を学ぶ必要はなくなった。', tag: '干扰项｜过度绝对', detail: '仅否定死记硬背。' },
+        { text: 'これからは、適切な質問を考える能力がより重要になる。', tag: '正解｜同义转述', detail: '对应「的確な問いを立てる力」。' },
+        { text: 'AIが出す答えには誤りが多いため、頼りすぎるべきではない。', tag: '干扰项｜无中生有', detail: '未提及。' },
+        { text: '膨大な情報を素早く暗記できる人ほど、AIをうまく使える。', tag: '干扰项｜与原文相反', detail: '相反。' }
+      ], answer: 1, explanation: '盯住总结词「つまり、～なのである」。' },
+      { id: 'p1-q7', section: '聴解', qType: '問題1 課題理解（🎧听力）', stem: '女の社員はこれからまず何をしますか。', listeningIntro: '会社で、女の社員と男の社員が明日の会議の準備について話しています。', dialogue: [
+        { speaker: 'ナレーター', text: '会社で、女の社員と男の社員が明日の会議の準備について話しています。女の社員はこれからまず何をしますか。' },
+        { speaker: '女', text: '佐藤さん、明日の会議の準備、どこまで進んでいますか。' },
+        { speaker: '男', text: 'あ、会議室の予約とプロジェクターの確認はさっき終わりましたよ。' },
+        { speaker: '女', text: 'ありがとうございます。じゃあ、参加者に配る資料をコピーしておきますね。' },
+        { speaker: '男', text: 'あっ、その資料なんですが、さっき部長から、3ページ目のグラフを最新のデータに差し替えてほしいって連絡があったんです。' },
+        { speaker: '女', text: 'そうなんですね！じゃあ、コピーはそのあとですね。データはどこにありますか。' },
+        { speaker: '男', text: '共有フォルダに入れておきました。あ、あと、飲み物の注文もお願いしていいですか。それは夕方までで大丈夫ですから。' },
+        { speaker: '女', text: '分かりました。じゃあ、急いでそちらから取りかかります。' }
+      ], translation: '【中文大意】会议室预约已完成。女员工原打算先复印资料，男同事提醒部长要求先换第3页图表最新数据，女员工决定先改图表、复印放后面；订饮料傍晚前就行。', options: [
+        { text: '会議室を予約する', tag: '干扰项｜已完成', detail: '男同事已完成。' },
+        { text: '資料をコピーする', tag: '干扰项｜顺延', detail: '「コピーはそのあとですね」。' },
+        { text: '資料のグラフを修正する', tag: '正解｜最优先', detail: '须先替换数据图表。' },
+        { text: '飲み物を注文する', tag: '干扰项｜非紧急', detail: '傍晚前即可。' }
+      ], answer: 2, explanation: '排除已完成、延后、不急事项 → 锁定最优先任务。' }
+    ]
+  },
+  {
+    id: 'predict-2', category: 'predict',
+    title: '2026年12月 N2 预测模拟卷 · 第2套',
+    subtitle: '含听力｜能率 · 究明する · 図々しい · からには · 远程办公 · 图书馆听力',
+    durationMin: 30, difficulty: '★★★★☆ 易错专攻',
+    questions: [
+      { id: 'p2-q1', section: '文字・語彙', qType: '問題1 漢字読み', stem: '最新の技術を導入して作業の<u>能率</u>を高めている。', options: [
+        { text: 'のうりつ', tag: '正解｜「率」读りつ', detail: '比例效率读りつ（能率・確率）。' },
+        { text: 'のうそつ', tag: '干扰项｜多音混淆', detail: 'そつ用于引率・軽率。' },
+        { text: 'ようりつ', tag: '干扰项｜形近字误读', detail: '能读のう。' },
+        { text: 'ようそつ', tag: '干扰项｜双错', detail: '全错。' }
+      ], answer: 0, explanation: '能率＝のうりつ。' },
+      { id: 'p2-q2', section: '文字・語彙', qType: '問題4 文脈規定', stem: '事故の原因を（　　）ため、専門家チームが派遣された。', options: [
+        { text: '究明する', tag: '正解｜他动词接「を」', detail: '原因を究明する。' },
+        { text: '判明する', tag: '干扰项｜自动词陷阱', detail: '须接「が」（原因が判明する）。' },
+        { text: '証明する', tag: '干扰项｜搭配偏差', detail: '意为证明清白/定理。' },
+        { text: '発明する', tag: '干扰项｜词义错', detail: '发明新技术。' }
+      ], answer: 0, explanation: '见助词「を」立刻排除自动词「判明する」。' },
+      { id: 'p2-q3', section: '文字・語彙', qType: '問題6 用法', stem: '「<u>図々しい</u>」の使い方として最もよいものはどれか。', options: [
+        { text: '初対面なのに人の給料を聞いてくるなんて本当に<u>図々しい</u>。', tag: '正解｜厚颜无耻', detail: '形容人厚脸皮、不客气（贬义）。' },
+        { text: '雨で道が<u>図々しく</u>なって歩きにくい。', tag: '干扰项｜对象错', detail: '不形容道路。' },
+        { text: 'とても<u>図々しい</u>性格で約束を守る。', tag: '干扰项｜褒贬错', detail: '守时用几帳面な。' },
+        { text: '夜更かしで頭が<u>図々しい</u>。', tag: '干扰项｜语义错', detail: '头沉用ぼんやり。' }
+      ], answer: 0, explanation: '「図々しい」只形容人＋贬义。' },
+      { id: 'p2-q4', section: '文法', qType: '問題7 文の文法1', stem: '留学を決意した（　　）、現地の文化もしっかり吸収してきたい。', options: [
+        { text: 'からには', tag: '正解｜既然……就……', detail: '后项强烈呼应决心意志「～たい／つもりだ」。' },
+        { text: 'だけに', tag: '干扰项｜正因为……', detail: '后接客观相称结果。' },
+        { text: 'わりに', tag: '干扰项｜比例转折', detail: '非转折。' },
+        { text: 'あまり', tag: '干扰项｜因过于……', detail: '多致失控结果。' }
+      ], answer: 0, explanation: '决意＋意志→秒选「からには」。' },
+      { id: 'p2-q5', section: '文法', qType: '問題8 並べ替え★', stem: 'どんなに<span class="star-slot"> 1 </span><span class="star-slot"> 2 </span><span class="star-slot is-star"> ★ </span><span class="star-slot"> 4 </span>絶対に諦めないつもりだ。', options: [
+        { text: '自分の夢だけは', tag: '第4位｜限定宾语', detail: '排第4位。' },
+        { text: '困難な状況に', tag: '第1位｜搭配', detail: '排第1位。' },
+        { text: '置かれた', tag: '第2位｜被动过去', detail: '排第2位。' },
+        { text: 'としても、', tag: '正解(★第3位)｜呼应どんなに', detail: '排第3位（★）。' }
+      ], answer: 3, explanation: '排序：2→3→4★→1。' },
+      { id: 'p2-q6', section: '読解', qType: '問題10 短文理解', passage: '在宅勤務の定着により、業務の効率化が進んだことは大きな成果だ。一方で、オフィスでの何気ない雑談から生まれるアイデアが減ったという指摘も多い。効率ばかりを追い求めるあまり、一見無駄に思える対面のやり取りが持つ価値を見落としてはならない。', stem: '筆者が最も言いたいことは何か。', options: [
+        { text: '在宅勤務は効率が悪いので全員戻るべきだ。', tag: '干扰项｜极端', detail: '原文肯定效率成果。' },
+        { text: '効率だけでなく、対面での何気ない交流の意義も大切にすべきだ。', tag: '正解｜主旨转述', detail: '对应「見落としてはならない」。' },
+        { text: '通勤削減で雑談の機会が増えていく。', tag: '干扰项｜因果颠倒', detail: '杂谈减少了。' },
+        { text: '効率化のため雑談を減らす必要がある。', tag: '干扰项｜相反', detail: '相反。' }
+      ], answer: 1, explanation: '抓「～は成果だ。一方で～見落としてはならない」。' },
+      { id: 'p2-q7', section: '聴解', qType: '問題2 ポイント理解（🎧听力）', stem: 'この図書館が一番人気を集めている理由は何ですか。', listeningIntro: 'ラジオでアナウンサーが新しい図書館について話しています。', dialogue: [
+        { speaker: 'ナレーター', text: 'アナウンサーが新しい図書館について話しています。一番人気の理由は何ですか。' },
+        { speaker: '男', text: '蔵書数が市内で最も多いことや、駅から歩いて3分という立地の良さも魅力ですが、何といっても利用者に好評なのは、会話ができるカフェスペースを併設したことだそうです。' }
+      ], translation: '【中文大意】藏书多、离站近虽好，但最受好评（何といっても利用者に好評なのは）的是附设了可聊天的咖啡空间。', options: [
+        { text: '市内でもっとも本が多いから', tag: '干扰项｜次要铺垫', detail: '在「ですが」前。' },
+        { text: '駅から歩いてすぐ行けるから', tag: '干扰项｜次要铺垫', detail: '在「ですが」前。' },
+        { text: '話しながら利用できるカフェスペースがあるから', tag: '正解｜命中「何といっても」', detail: '核心最高评价信号词！' },
+        { text: 'とても静かで勉強に集中できるから', tag: '干扰项｜相反', detail: '相反。' }
+      ], answer: 2, explanation: '听清「何といっても（无论怎么说最……）」。' }
+    ]
+  },
+  {
+    id: 'predict-3', category: 'predict',
+    title: '2026年12月 N2 预测模拟卷 · 第3套',
+    subtitle: '含听力｜鮮やか · 未経験 · 順調に · ばかりか · 习惯心理 · 报告修改听力',
+    durationMin: 30, difficulty: '★★★★☆ 核心必刷',
+    questions: [
+      { id: 'p3-q1', section: '文字・語彙', qType: '問題1 漢字読み', stem: '雨が上がった後、空に<u>鮮やか</u>な虹がかかっていた。', options: [
+        { text: 'あざやか', tag: '正解｜鮮やか', detail: '鲜艳鲜明。' },
+        { text: 'おだやか', tag: '干扰项｜穏やか', detail: '温和。' },
+        { text: 'さわやか', tag: '干扰项｜爽やか', detail: '清爽。' },
+        { text: 'なごやか', tag: '干扰项｜和やか', detail: '融洽。' }
+      ], answer: 0, explanation: '四大「～やか」高频必记。' },
+      { id: 'p3-q2', section: '文字・語彙', qType: '問題3 語形成', stem: '操作が簡単なので、IT分野が（　　）経験の方でも応募できます。', options: [
+        { text: '未', tag: '正解｜未経験', detail: '日语固定说未経験（みけいけん）。' },
+        { text: '非', tag: '干扰项｜非公開', detail: '不接経験。' },
+        { text: '無', tag: '干扰项｜母语陷阱', detail: '日语不说無経験。' },
+        { text: '不', tag: '干扰项｜不足', detail: '不接経験。' }
+      ], answer: 0, explanation: '勿受中文影响选無！' },
+      { id: 'p3-q3', section: '文字・語彙', qType: '問題5 言い換え類義', stem: '準備は今のところ<u>順調に</u>進んでいる。', options: [
+        { text: 'うまく', tag: '正解｜顺利地', detail: '順調に＝うまく。' },
+        { text: '急いで', tag: '干扰项｜赶忙', detail: '不同。' },
+        { text: '丁寧に', tag: '干扰项｜细致', detail: '不同。' },
+        { text: '勝手に', tag: '干扰项｜擅自', detail: '贬义。' }
+      ], answer: 0, explanation: '順調に進む＝うまく進む。' },
+      { id: 'p3-q4', section: '文法', qType: '問題7 文の文法1', stem: '佐藤さんは日本語（　　）、英語やスペイン語も流暢に話せる。', options: [
+        { text: 'ばかりか', tag: '正解｜同向递进', detail: 'AばかりかBも。' },
+        { text: 'どころか', tag: '干扰项｜反差否定', detail: '多表相反落差。' },
+        { text: 'に限って', tag: '干扰项｜偏偏', detail: '语境不符。' },
+        { text: 'としたら', tag: '干扰项｜假设', detail: '接续错。' }
+      ], answer: 0, explanation: '同向配「も」选ばかりか。' },
+      { id: 'p3-q5', section: '文法', qType: '問題8 並べ替え★', stem: '彼は長年<span class="star-slot"> 1 </span><span class="star-slot"> 2 </span><span class="star-slot is-star"> ★ </span><span class="star-slot"> 4 </span>非常に的確だ。', options: [
+        { text: 'トラブルへの対応が', tag: '第4位｜后句主语', detail: '排第4位。' },
+        { text: 'だけあって、', tag: '正解(★第3位)｜不愧是', detail: '排第3位（★）。' },
+        { text: '働いてきた', tag: '第2位｜持续经验', detail: '排第2位。' },
+        { text: '現場で', tag: '第1位｜地点', detail: '排第1位。' }
+      ], answer: 1, explanation: '排序：4→3→2★→1。' },
+      { id: 'p3-q6', section: '読解', qType: '問題10 短文理解', passage: '新しい習慣を始めるとき、最初から高い目標を掲げると挫折しやすい。むしろ、「毎日5分だけ本を開く」といった、どんなに疲れた日でもこなせるほど小さな行動から始めるほうが、結果として長く続けられるものだ。', stem: '筆者が勧めている方法はどれか。', options: [
+        { text: '毎日高い目標を設定すること。', tag: '干扰项｜相反', detail: '易受挫。' },
+        { text: '疲れている日は休んでまとめて行うこと。', tag: '干扰项｜曲解', detail: '原文说再累也能做的小行动。' },
+        { text: '気力に左右されず、簡単に実行できる小さな行動から始めること。', tag: '正解｜精准对应', detail: '对应むしろ～小さな行動から。' },
+        { text: '徐々に作業時間を減らすこと。', tag: '干扰项｜无中生有', detail: '未提及。' }
+      ], answer: 2, explanation: '抓「むしろ～ほうが」。' },
+      { id: 'p3-q7', section: '聴解', qType: '問題1 課題理解（🎧听力）', stem: '女の学生は提出前に何を直さなければなりませんか。', listeningIntro: '大学で学生と先生がレポートについて話しています。', dialogue: [
+        { speaker: 'ナレーター', text: '学生と先生がレポートについて話しています。何を直さなければなりませんか。' },
+        { speaker: '男', text: 'アンケート結果の分析もよくできていたし、文字数も規定どおりだね。ただね、最後の参考文献の書き方が大学のルールと少し違っているから直しておいて。表紙はそのままでいいよ。' }
+      ], translation: '【中文大意】分析和字数都达标，只有「ただね」参考文献格式要改，封面不用改。', options: [
+        { text: 'アンケート結果の分析', tag: '干扰项｜已肯定', detail: 'よくできていた。' },
+        { text: 'レポートの文字数', tag: '干扰项｜已达标', detail: '規定どおり。' },
+        { text: '参考文献の書き方', tag: '正解｜转折后唯一要求', detail: 'ただね～直しておいて。' },
+        { text: '表紙のデザイン', tag: '干扰项｜无需改', detail: 'そのままでいいよ。' }
+      ], answer: 2, explanation: '盯紧「ただね」后的修改要求！' }
+    ]
+  },
+  {
+    id: 'predict-4', category: 'predict',
+    title: '2026年12月 N2 预测模拟卷 · 第4套',
+    subtitle: '含听力｜蓄えて · 思い浮かばない · めったに · に伴って · 食品浪费 · 即时应答3选1',
+    durationMin: 30, difficulty: '★★★★☆ 复合动词与即时应答',
+    questions: [
+      { id: 'p4-q1', section: '文字・語彙', qType: '問題2 表記', stem: '地震に備えて、非常用の食料を<u>たくわえて</u>おく。', options: [
+        { text: '蓄えて', tag: '正解｜蓄える', detail: '储备积蓄。' },
+        { text: '養えて', tag: '干扰项｜養う', detail: '抚养培养。' },
+        { text: '備えて', tag: '干扰项｜備える', detail: '防备。' },
+        { text: '構えて', tag: '干扰项｜構える', detail: '摆架势。' }
+      ], answer: 0, explanation: '蓄える＝たくわえる。' },
+      { id: 'p4-q2', section: '文字・語彙', qType: '問題4 文脈規定', stem: '締め切りが近いのに、なかなかいいアイデアが（　　）。', options: [
+        { text: '思い浮かばない', tag: '正解｜自动词接「が」', detail: '脑中浮现新点子。' },
+        { text: '思い込まない', tag: '干扰项｜深信不疑', detail: '语义不同。' },
+        { text: '思い切らない', tag: '干扰项｜下定决心', detail: '不搭。' },
+        { text: '思い出さない', tag: '干扰项｜他动词接「を」', detail: '回忆旧事。' }
+      ], answer: 0, explanation: 'アイデアが思い浮かぶ（自）。' },
+      { id: 'p4-q3', section: '文字・語彙', qType: '問題6 用法', stem: '「<u>めったに</u>」の使い方として最もよいものはどれか。', options: [
+        { text: '彼は温厚なので、怒ることは<u>めったに</u>ない。', tag: '正解｜否定呼应', detail: 'めったに～ない（几乎不）。' },
+        { text: '忙しくて<u>めったに</u>残業をしている。', tag: '干扰项｜缺否定', detail: '错误。' },
+        { text: '人気があり<u>めったに</u>予約が取れる。', tag: '干扰项｜缺否定', detail: '应为取れない。' },
+        { text: '風景が<u>めったに</u>変わった。', tag: '干扰项｜语义呼应双错', detail: '应用すっかり。' }
+      ], answer: 0, explanation: '见めったに先找句尾「ない」。' },
+      { id: 'p4-q4', section: '文法', qType: '問題7 文の文法1', stem: '高齢化が進む（　　）、介護人材の不足が深刻になっている。', options: [
+        { text: 'に伴って', tag: '正解｜随着……', detail: '伴随变化。' },
+        { text: 'に対して', tag: '干扰项｜对于', detail: '接名词。' },
+        { text: 'に基づいて', tag: '干扰项｜基于', detail: '接名词。' },
+        { text: 'に比べて', tag: '干扰项｜相比', detail: '表比较。' }
+      ], answer: 0, explanation: '社会变化选に伴って。' },
+      { id: 'p4-q5', section: '文法', qType: '問題8 並べ替え★', stem: 'せっかく<span class="star-slot"> 1 </span><span class="star-slot"> 2 </span><span class="star-slot is-star"> ★ </span><span class="star-slot"> 4 </span>とても残念だ。', options: [
+        { text: '使われずに', tag: '正解(★第3位)｜被动＋せずに', detail: '排第3位（★）。' },
+        { text: '終わってしまって、', tag: '第4位｜遗憾', detail: '排第4位。' },
+        { text: '苦労して作った資料が、', tag: '第1位｜主语', detail: '排第1位。' },
+        { text: '会議で', tag: '第2位｜场合', detail: '排第2位。' }
+      ], answer: 0, explanation: '排序：3→4→1★→2。' },
+      { id: 'p4-q6', section: '読解', qType: '問題10 短文理解', passage: '賞味期限はおいしく食べられる目安にすぎず、過ぎたからといって直ちに食べられなくなるわけではない。期限表示の正しい意味を知ることが、食品ロスを減らす第一歩となる。', stem: '文章の内容と合っているものはどれか。', options: [
+        { text: '賞味期限を過ぎたらすぐ捨てるべきだ。', tag: '干扰项｜相反', detail: '相反。' },
+        { text: '食品ロスを減らすには、賞味期限の意味を正しく理解することが大切だ。', tag: '正解｜忠实末句', detail: '对应末句。' },
+        { text: '家庭での食品ロスは少ない。', tag: '干扰项｜无中生有', detail: '未提。' },
+        { text: '賞味期限は安全に食べられる限界の日だ。', tag: '干扰项｜概念偷换', detail: '那是消費期限。' }
+      ], answer: 1, explanation: '区分賞味期限与消費期限。' },
+      { id: 'p4-q7', section: '聴解', qType: '問題4 即時応答（🎧全真3选1）', stem: '女の人の言葉に対する返事として、最もよいものを1つ選んでください。', listeningIntro: '職場で、女の人が話しかけています。（3选1）', dialogue: [
+        { speaker: 'ナレーター', text: '返事として最もよいものを1つ選んでください。' },
+        { speaker: '女', text: 'すみません、ちょっとコピー機の調子が悪いんですが、見てもらえませんか。' },
+        { speaker: 'ナレーター', text: '1、あっ、ごめん、今ちょうど手が離せなくて。あと5分待ってもらえる？' },
+        { speaker: 'ナレーター', text: '2、いいえ、コピー機はさっき買いましたよ。' },
+        { speaker: 'ナレーター', text: '3、はい、とても調子がいいみたいですよ。' }
+      ], translation: '【中文大意】女：复印机坏了能看下吗？1.抱歉正脱不开身（手が離せない），等5分钟行吗？', options: [
+        { text: 'あっ、ごめん、今ちょうど手が離せなくて。あと5分待ってもらえる？', tag: '正解｜手が離せない', detail: '意为手头正忙脱不开身！' },
+        { text: 'いいえ、コピー機はさっき買いましたよ。', tag: '干扰项｜答非所问', detail: '不合逻辑。' },
+        { text: 'はい、とても調子がいいみたいですよ。', tag: '干扰项｜反义陷阱', detail: '与故障矛盾。' }
+      ], answer: 0, explanation: '牢记惯用句「手が離せない」。' }
+    ]
+  },
+  {
+    id: 'predict-5', category: 'predict',
+    title: '2026年12月 N2 预测模拟卷 · 第5套',
+    subtitle: '含听力｜把握 · 縮小 · ひとまず · 「わけ」四连 · 敬语排序 · 信息检索 · 睡眠听力',
+    durationMin: 30, difficulty: '★★★★★ 考前压轴冲刺',
+    questions: [
+      { id: 'p5-q1', section: '文字・語彙', qType: '問題1 漢字読み', stem: 'まず現状の課題を正確に<u>把握</u>することが欠かせない。', options: [
+        { text: 'はあく', tag: '正解｜把握', detail: '联想握手あくしゅ→把握はあく。' },
+        { text: 'ばあく', tag: '干扰项｜浊音错', detail: '把读清音は。' },
+        { text: 'はおく', tag: '干扰项｜元音错', detail: '握读あく。' },
+        { text: 'ばおく', tag: '干扰项｜双错', detail: '全错。' }
+      ], answer: 0, explanation: '把握＝はあく。' },
+      { id: 'p5-q2', section: '文字・語彙', qType: '問題4 文脈規定', stem: '予算が限られているため、計画の一部を（　　）せざるを得ない。', options: [
+        { text: '縮小', tag: '正解｜計画を縮小する', detail: '缩小规模计划。' },
+        { text: '縮約', tag: '干扰项｜缩略文章', detail: '不搭。' },
+        { text: '減少', tag: '干扰项｜数量减少', detail: '不配計画。' },
+        { text: '節約', tag: '干扰项｜节约预算', detail: '不配計画。' }
+      ], answer: 0, explanation: '計画を縮小する。' },
+      { id: 'p5-q3', section: '文字・語彙', qType: '問題5 言い換え類義', stem: '今日の議論は<u>ひとまず</u>ここまでにしましょう。', options: [
+        { text: 'いったん', tag: '正解｜暂且', detail: 'ひとまず＝いったん。' },
+        { text: 'いますぐ', tag: '干扰项｜立刻', detail: '不同。' },
+        { text: 'かならず', tag: '干扰项｜一定', detail: '无关。' },
+        { text: 'ようやく', tag: '干扰项｜终于', detail: '不同。' }
+      ], answer: 0, explanation: 'ひとまず＝いったん／とりあえず。' },
+      { id: 'p5-q4', section: '文法', qType: '問題7 文の文法1', stem: '体調が優れないとはいえ、責任者なので、（　　）。', options: [
+        { text: '出席しないわけにはいかない', tag: '正解｜不能不出席', detail: '责任道义上必须做。' },
+        { text: '出席するわけにはいかない', tag: '干扰项｜不能出席', detail: '意思相反。' },
+        { text: '出席するわけがない', tag: '干扰项｜不可能出席', detail: '强烈否定推测。' },
+        { text: '出席するわけではない', tag: '干扰项｜并不是要出席', detail: '部分否定。' }
+      ], answer: 0, explanation: '「わけ」四连必背。' },
+      { id: 'p5-q5', section: '文法', qType: '問題8 並べ替え★', stem: '先日<span class="star-slot"> 1 </span><span class="star-slot"> 2 </span><span class="star-slot is-star"> ★ </span><span class="star-slot"> 4 </span>確認いたしました。', options: [
+        { text: '資料の内容を、', tag: '正解(★第3位)｜宾语', detail: '排第3位（★）。' },
+        { text: 'お送り', tag: '第1位｜お～いただく', detail: '排第1位。' },
+        { text: '先ほど', tag: '第4位｜时间状语', detail: '排第4位。' },
+        { text: 'いただいた', tag: '第2位｜授受敬语', detail: '排第2位。' }
+      ], answer: 0, explanation: '排序：2→4→1★→3。' },
+      { id: 'p5-q6', section: '読解', qType: '問題14 情報検索', passage: '【秋の写真講座】\n・対象：市内に在住、在勤、または在学の18歳以上の方\n・受講料：2,000円（市内在住の学生は半額。当日受付にて支払い）\n・持ち物：デジタルカメラまたはスマートフォン', stem: '市外に住んでいて市内の大学に通う田中さん（20歳）について正しいものはどれか。', options: [
+        { text: '受講資格があり、当日1,000円を支払う。', tag: '干扰项｜优惠陷阱', detail: '半价仅限市内在住学生，田中住市外！' },
+        { text: '受講資格があり、当日2,000円を支払う。', tag: '正解｜条件全吻合', detail: '市内在学可报＋市外在住全额2,000円。' },
+        { text: '市外在住のため申し込めない。', tag: '干扰项｜漏看在学', detail: '对象含在学。' },
+        { text: '事前振込しデジカメ必携。', tag: '干扰项｜双错', detail: '当日付且手机亦可。' }
+      ], answer: 1, explanation: '资格宽松 vs 优惠严格！' },
+      { id: 'p5-q7', section: '聴解', qType: '問題3 概要理解（🎧听力）', stem: 'この専門家が最も伝えたいことは何ですか。', listeningIntro: '講演会で専門家が睡眠について話しています。', dialogue: [
+        { speaker: 'ナレーター', text: '専門家が睡眠について話しています。最も伝えたいことは何ですか。' },
+        { speaker: '女', text: '休日の「寝だめ」で普段より3時間以上遅く起きると体内時計が乱れます。大切なのは、休日も起きる時間を大きく変えず、眠いときは昼間に20分程度の短い昼寝をとることです。' }
+      ], translation: '【中文大意】周末补觉晚起会打乱生物钟，重要的是起床时间别大变，困了白天小睡20分钟。', options: [
+        { text: '休日にまとめて長く寝るべきだ。', tag: '干扰项｜被否定', detail: '反对寝だめ。' },
+        { text: '休日も起床時間を大きく変えず、必要なら短い昼寝をとるとよい。', tag: '正解｜命中「大切なのは」', detail: '精准主旨。' },
+        { text: '毎日昼間に1時間以上寝るのが効果的だ。', tag: '干扰项｜数字错', detail: '20分钟左右。' },
+        { text: '日曜の夜は遅く寝るべきだ。', tag: '干扰项｜无中生有', detail: '未提。' }
+      ], answer: 1, explanation: '抓「大切なのは、～」。' }
+    ]
+  }
+];
+
+/* =========================================================================
+   4. 状态与安全持久化（全部加 try/catch，杜绝按钮失灵！）
+   ========================================================================= */
+const STORAGE_KEYS = {
+  CUSTOM_PAPERS: 'jlpt_n2_custom_papers_v3',
+  MISTAKES: 'jlpt_n2_mistakes_v3',
+  HISTORY: 'jlpt_n2_history_v3',
+  PDF_SHEETS: 'jlpt_n2_pdf_sheets_v1',
+  PDF_MISTAKES: 'jlpt_n2_pdf_mistakes_v1'
+};
+
+function loadJson(k, fb) { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch (e) { return fb; } }
+function saveJsonSafe(k, val) { try { localStorage.setItem(k, JSON.stringify(val)); } catch (e) {} }
+
+const state = {
+  tab: 'pdfroom',
+  customPapers: loadJson(STORAGE_KEYS.CUSTOM_PAPERS, []),
+  mistakes: loadJson(STORAGE_KEYS.MISTAKES, {}),
+  history: loadJson(STORAGE_KEYS.HISTORY, {}),
+  pdfSheets: loadJson(STORAGE_KEYS.PDF_SHEETS, {}),
+  pdfMistakes: loadJson(STORAGE_KEYS.PDF_MISTAKES, {}),
+  cachedDbKeys: [],
+  quiz: null,
+  lastResult: null,
+  resultFilter: 'wrong',
+  mistakeViewTab: 'pdf',
+  importTargetId: null
+};
+
+const pdfRoom = {
+  examId: '2010-07',
+  activeDocSlot: 'examPdf',
+  mobilePane: 'both',
+  omrSection: '文字・語彙',
+  filesMeta: {},
+  pdfDocs: {},
+  pageNums: { examPdf: 1, answerPdf: 1, scriptPdf: 1, transPdf: 1 },
+  scale: 1.1,
+  renderSeq: 0,
+  ab: { a: null, b: null, active: false },
+  speed: 1.0,
+  timerSec: 105 * 60,
+  timerRunning: false,
+  timerId: null
+};
+
+const DOC_SLOTS = [
+  { key: 'examPdf', short: '真题卷' },
+  { key: 'answerPdf', short: '答案解析' },
+  { key: 'scriptPdf', short: '听力原文' },
+  { key: 'transPdf', short: '译文' }
+];
+
+const OMR_PRESETS = {
+  'legacy107': {
+    label: '2010–2021 标准版 (107题)',
+    sections: [
+      { name: '文字・語彙', major: '言語知識', start: 1, end: 32 },
+      { name: '文法', major: '言語知識', start: 33, end: 54 },
+      { name: '読解', major: '読解', start: 55, end: 75 },
+      { name: '聴解', major: '聴解', start: 76, end: 107, threeChoiceRange: [93, 104] }
+    ]
+  },
+  'modern101': {
+    label: '2022–2026 最新版 (101题)',
+    sections: [
+      { name: '文字・語彙', major: '言語知識', start: 1, end: 30 },
+      { name: '文法', major: '言語知識', start: 31, end: 52 },
+      { name: '読解', major: '読解', start: 53, end: 71 },
+      { name: '聴解', major: '聴解', start: 72, end: 101, threeChoiceRange: [88, 98] }
+    ]
+  }
+};
+
+function saveState() {
+  saveJsonSafe(STORAGE_KEYS.CUSTOM_PAPERS, state.customPapers);
+  saveJsonSafe(STORAGE_KEYS.MISTAKES, state.mistakes);
+  saveJsonSafe(STORAGE_KEYS.HISTORY, state.history);
+  saveJsonSafe(STORAGE_KEYS.PDF_SHEETS, state.pdfSheets);
+  saveJsonSafe(STORAGE_KEYS.PDF_MISTAKES, state.pdfMistakes);
+  updateMistakeBadges();
+}
+
+function getAllPapers() {
+  const m = new Map();
+  BUILTIN_PAPERS.forEach(p => m.set(p.id, { ...p, isBuiltin: true }));
+  state.customPapers.forEach(p => m.set(p.id, { ...p, isCustom: true }));
+  return Array.from(m.values());
+}
+function getPaperById(id) { return getAllPapers().find(p => p.id === id) || null; }
+function getSessionLabel(id) { const s = TIMELINE_SESSIONS.find(x => x.id === id); return s ? s.label : id; }
+function ensurePdfSheet(examId) {
+  if (!state.pdfSheets[examId]) {
+    const yr = parseInt(String(examId).slice(0, 4), 10);
+    state.pdfSheets[examId] = { preset: (!isNaN(yr) && yr >= 2022) ? 'modern101' : 'legacy107', answers: {}, keyText: '', lastReport: null };
+  }
+  return state.pdfSheets[examId];
+}
+function updateMistakeBadges() {
+  const total = Object.values(state.mistakes).filter(m => !m.mastered).length + Object.values(state.pdfMistakes).filter(m => !m.mastered).length;
+  const b1 = document.getElementById('mistake-badge');
+  const b2 = document.getElementById('mistake-badge-top');
+  const b3 = document.getElementById('mistake-badge-mobile');
+  if (b1) b1.textContent = total;
+  if (b2) b2.textContent = total;
+  if (b3) { b3.textContent = total; b3.classList.toggle('hidden', total === 0); }
+}
+function escapeHtml(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function renderStemHtml(s) { return String(s ?? '').replace(/\n/g, '<br>'); }
+function formatTime(sec) { const s = Math.max(0, Math.floor(sec)); return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; }
+function getCefrLabel(sc, ok) { return !ok ? '未达合格线' : (sc >= 112 ? 'CEFR B2' : (sc >= 90 ? 'CEFR B1' : '—')); }
+
+/* =========================================================================
+   5. 导航 & 渲染调度
+   ========================================================================= */
+function switchTab(tab) {
+  stopTtsListening(false);
+  if (state.quiz && state.quiz.timerId && tab !== 'quiz') { clearInterval(state.quiz.timerId); state.quiz.timerId = null; }
+  state.tab = tab;
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function openPdfExam(examId) {
+  pdfRoom.examId = examId;
+  pdfRoom.ab = { a: null, b: null, active: false };
+  state.tab = 'pdfroom';
+  render();
+  showToast(`已打开 ${getSessionLabel(examId)} 模考室`);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateNavStyles() {
+  const act = (state.tab === 'quiz' || state.tab === 'result') ? null : state.tab;
+  ['pdfroom', 'predict', 'archive', 'mistakes', 'manage'].forEach(k => {
+    const el = document.getElementById(`nav-${k}`);
+    if (el) el.className = k === act
+      ? 'px-3 py-2 rounded-lg font-medium bg-indigo-600 text-white shadow flex items-center gap-1'
+      : 'px-3 py-2 rounded-lg font-medium text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1';
+    const mel = document.getElementById(`mnav-${k}`);
+    if (mel) mel.className = k === act
+      ? 'relative flex flex-col items-center py-1 gap-0.5 text-indigo-600 font-bold'
+      : 'relative flex flex-col items-center py-1 gap-0.5 text-slate-500';
+  });
+  const mb = document.getElementById('mobile-bottom-nav');
+  if (mb) mb.classList.toggle('hidden', state.tab === 'quiz');
+}
+
+function render() {
+  updateNavStyles();
+  updateMistakeBadges();
+  const root = document.getElementById('app-root');
+  if (state.tab === 'pdfroom') {
+    root.innerHTML = renderPdfRoomShell();
+    // 同步立刻渲染答题卡，绝不等待 IndexedDB！
+    renderOmrOnly();
+    renderPdfGradeReport();
+    updateKeyCountDisplay();
+    setMobilePane(pdfRoom.mobilePane, false);
+    // 异步静默恢复本机缓存的 PDF & MP3
+    loadCachedMediaForExam(pdfRoom.examId);
+  } else if (state.tab === 'predict') root.innerHTML = renderPredictView();
+  else if (state.tab === 'archive') root.innerHTML = renderArchiveView();
+  else if (state.tab === 'mistakes') root.innerHTML = renderMistakesView();
+  else if (state.tab === 'manage') root.innerHTML = renderManageView();
+  else if (state.tab === 'quiz') root.innerHTML = renderQuizView();
+  else if (state.tab === 'result') root.innerHTML = renderResultView();
+}
+
+/* =========================================================================
+   6. PDF + 真人 MP3 模考室（原生全覆盖选文件 + PDF.js CJK高清 + A-B复读）
+   ========================================================================= */
+function renderPdfRoomShell() {
+  const sheet = ensurePdfSheet(pdfRoom.examId);
+  const validSessions = TIMELINE_SESSIONS.filter(s => !s.cancelled);
+
+  return `
+    <div class="space-y-4">
+      <section class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="pdf-exam-select" onchange="onChangePdfExam(this.value)" class="border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 bg-slate-50">
+              ${validSessions.map(s => `<option value="${s.id}" ${s.id === pdfRoom.examId ? 'selected' : ''}>${s.label} N2 真题</option>`).join('')}
+            </select>
+            <select id="omr-preset-select" onchange="onChangeOmrPreset(this.value)" class="border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-medium text-slate-700 bg-white">
+              ${Object.entries(OMR_PRESETS).map(([k, v]) => `<option value="${k}" ${sheet.preset === k ? 'selected' : ''}>${v.label}</option>`).join('')}
+            </select>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 font-mono text-xs font-bold text-slate-800">
+              <span>⏱</span><span id="pdf-timer-display">${formatTime(pdfRoom.timerSec)}</span>
+              <button type="button" onclick="togglePdfTimer()" id="pdf-timer-btn" class="text-indigo-600 font-sans ml-1">${pdfRoom.timerRunning ? '暂停' : '开始'}</button>
+              <button type="button" onclick="resetPdfTimer()" class="text-slate-400 font-sans ml-1">重置</button>
+            </div>
+            <button type="button" onclick="clearCurrentExamCache()" class="px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-500 text-xs">清缓存</button>
+          </div>
+        </div>
+
+        <!-- 5个原生全覆盖文件按钮（专治 iOS 点击失灵与百度网盘文件变灰！） -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+          ${[
+            { key: 'examPdf', label: '1. 选真题 PDF', cls: 'border-indigo-300 bg-indigo-50 text-indigo-900' },
+            { key: 'audioMp3', label: '2. 选听力 MP3', cls: 'border-sky-300 bg-sky-50 text-sky-900' },
+            { key: 'answerPdf', label: '3. 选答案解析', cls: 'border-emerald-300 bg-emerald-50 text-emerald-900' },
+            { key: 'scriptPdf', label: '4. 选听力原文', cls: 'border-amber-300 bg-amber-50 text-amber-900' },
+            { key: 'transPdf', label: '5. 选阅读译文', cls: 'border-purple-300 bg-purple-50 text-purple-900' }
+          ].map(slot => `
+            <div class="file-btn-wrap rounded-xl border p-2.5 min-h-[54px] flex flex-col justify-center ${slot.cls}">
+              <div class="font-bold truncate pointer-events-none">${slot.label}</div>
+              <div id="slot-status-${slot.key}" class="text-[10px] opacity-80 truncate mt-0.5 pointer-events-none">点击选取文件</div>
+              <input type="file" class="file-btn-input" onchange="onSelectExamMedia('${slot.key}', event)" />
+            </div>
+          `).join('')}
+        </div>
+      </section>
+
+      <!-- 真人 MP3 精听播放器 -->
+      <section class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl p-3.5 sm:p-4 shadow-md">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2.5">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-lg">🎧</span>
+            <div class="min-w-0">
+              <div class="text-xs sm:text-sm font-bold truncate" id="mp3-filename">尚未装载听力 MP3（点上方「2. 选听力 MP3」）</div>
+              <div class="text-[11px] text-indigo-200" id="mp3-ab-status">支持快退5秒 · 倍速 · A-B 句段复读</div>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-1.5 text-xs shrink-0">
+            <button type="button" onclick="jumpMp3(-5)" class="px-2.5 py-1.5 rounded-lg bg-white/15 font-semibold">⏪ -5秒</button>
+            <button type="button" onclick="jumpMp3(5)" class="px-2.5 py-1.5 rounded-lg bg-white/15 font-semibold">⏩ +5秒</button>
+            <button type="button" onclick="cycleMp3Speed()" id="mp3-speed-btn" class="px-2.5 py-1.5 rounded-lg bg-indigo-500 font-bold">1.0x</button>
+            <button type="button" onclick="setMp3Point('a')" class="px-2 py-1.5 rounded-lg bg-white/15">设A点</button>
+            <button type="button" onclick="setMp3Point('b')" class="px-2 py-1.5 rounded-lg bg-white/15">设B复读</button>
+            <button type="button" onclick="clearMp3Ab()" id="mp3-btn-clear" class="hidden px-2 py-1.5 rounded-lg bg-rose-500 text-white font-semibold">取消复读</button>
+          </div>
+        </div>
+        <audio id="pdf-mp3-audio" controls playsinline class="w-full h-10 rounded-lg" ontimeupdate="onMp3TimeUpdate()"></audio>
+      </section>
+
+      <!-- 手机端视图切换 -->
+      <div class="lg:hidden grid grid-cols-3 gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200 text-xs font-semibold">
+        <button type="button" id="mpane-both" onclick="setMobilePane('both')" class="py-2 rounded-lg bg-indigo-600 text-white">📱 上下同屏</button>
+        <button type="button" id="mpane-pdf" onclick="setMobilePane('pdf')" class="py-2 rounded-lg text-slate-600">📄 全屏看PDF</button>
+        <button type="button" id="mpane-omr" onclick="setMobilePane('omr')" class="py-2 rounded-lg text-slate-600">✏️ 全屏涂卡</button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        <!-- 左：PDF 浏览区 -->
+        <section id="pane-pdf-wrap" class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 border-b border-slate-200 overflow-x-auto">
+            <div class="flex items-center gap-1.5 shrink-0">
+              ${DOC_SLOTS.map(d => `
+                <button type="button" id="doctab-${d.key}" onclick="switchActivePdfSlot('${d.key}')"
+                  class="px-2.5 py-1.5 rounded-lg text-xs font-semibold ${d.key === pdfRoom.activeDocSlot ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-600'}">
+                  ${d.short}
+                </button>`).join('')}
+            </div>
+            <div class="flex items-center gap-1 text-xs shrink-0">
+              <button type="button" onclick="zoomPdf(-0.2)" class="px-2.5 py-1 rounded bg-white border border-slate-200 font-bold">－</button>
+              <button type="button" onclick="zoomPdf(0)" class="px-2 py-1 rounded bg-white border border-slate-200">适配</button>
+              <button type="button" onclick="zoomPdf(0.2)" class="px-2.5 py-1 rounded bg-white border border-slate-200 font-bold">＋</button>
+              <a id="pdf-raw-open" href="#" target="_blank" class="hidden px-2 py-1 rounded bg-indigo-50 text-indigo-700 font-medium">原文件</a>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between px-3 py-2 bg-white border-b border-slate-100 text-xs">
+            <button type="button" onclick="changePdfPage(-1)" class="px-3.5 py-2 rounded-lg bg-slate-100 font-semibold">← 上一页</button>
+            <div class="flex items-center gap-1.5">
+              <span>第</span>
+              <input id="pdf-page-input" type="number" min="1" value="1" onchange="jumpPdfPage(this.value)" class="w-12 text-center border border-slate-300 rounded-md py-1 font-bold" />
+              <span>/ <strong id="pdf-page-total">0</strong> 页</span>
+            </div>
+            <button type="button" onclick="changePdfPage(1)" class="px-3.5 py-2 rounded-lg bg-slate-100 font-semibold">下一页 →</button>
+          </div>
+
+          <div id="pdf-canvas-wrap" class="p-2 sm:p-3 bg-slate-200/70 min-h-[360px] max-h-[72vh] overflow-auto">
+            <div id="pdf-empty-hint" class="h-[320px] flex flex-col items-center justify-center text-center p-5 text-slate-500">
+              <div class="text-4xl mb-2">📄</div>
+              <div class="font-bold text-slate-700 text-sm">点上方「1. 选真题 PDF」即可高清翻页看真题</div>
+              <p class="text-xs mt-1 max-w-xs">支持从苹果「文件」App 或电脑文件夹选取网盘下好的真题卷、答案解析、听力原文与译文 PDF。</p>
+            </div>
+            <canvas id="pdf-render-canvas" class="hidden"></canvas>
+          </div>
+        </section>
+
+        <!-- 右：电子答题卡 -->
+        <section id="pane-omr-wrap" class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-900 text-sm sm:text-base">✏️ 全真电子答题卡</h3>
+            <span id="omr-progress-text" class="text-xs font-semibold text-indigo-600">已涂 0 题</span>
+          </div>
+          <div id="omr-sec-tabs" class="grid grid-cols-4 gap-1.5 text-xs font-semibold"></div>
+          <div id="omr-grid-container" class="max-h-[42vh] overflow-y-auto pr-1 space-y-2"></div>
+
+          <div class="pt-3 border-t border-slate-200 space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-slate-800">🔑 粘贴标准答案（自动评分找错题）</span>
+              <span id="key-parse-count" class="text-slate-500">已识别 0 题</span>
+            </div>
+            <textarea id="omr-key-input" rows="2" oninput="onEditAnswerKey(this.value)"
+              class="w-full font-mono text-xs border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-indigo-500"
+              placeholder="粘贴本期答案数字（如 1324 1243... 或 1.2 2.4 3.1）">${escapeHtml(sheet.keyText || '')}</textarea>
+            <div class="flex gap-2">
+              <button type="button" onclick="gradePdfExam()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold shadow-sm">✅ 自动评分 & 标出错题</button>
+              <button type="button" onclick="clearCurrentOmrAnswers()" class="px-3 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs">清空</button>
+            </div>
+          </div>
+
+          <div id="pdf-grade-report"></div>
+        </section>
+      </div>
+    </div>`;
+}
+
+async function loadCachedMediaForExam(examId) {
+  Object.values(pdfRoom.filesMeta).forEach(m => { if (m && m.blobUrl) URL.revokeObjectURL(m.blobUrl); });
+  pdfRoom.filesMeta = {};
+  pdfRoom.pdfDocs = {};
+  pdfRoom.pageNums = { examPdf: 1, answerPdf: 1, scriptPdf: 1, transPdf: 1 };
+
+  const slots = ['examPdf', 'audioMp3', 'answerPdf', 'scriptPdf', 'transPdf'];
+  for (const slot of slots) {
+    const rec = await dbGetFileSafe(`${examId}::${slot}`);
+    if (pdfRoom.examId !== examId) return;
+    if (rec && rec.blob) {
+      pdfRoom.filesMeta[slot] = { name: rec.name, size: rec.size, blobUrl: URL.createObjectURL(rec.blob), blob: rec.blob };
+      updateSlotBadge(slot, `✓ ${rec.name}`);
+    } else {
+      updateSlotBadge(slot, '点击选取文件');
+    }
+  }
+  bindMp3Element();
+  await loadAndRenderActivePdf();
+}
+
+function updateSlotBadge(slot, text) {
+  const el = document.getElementById(`slot-status-${slot}`);
+  if (el) el.textContent = text;
+}
+
+async function onChangePdfExam(newId) {
+  pdfRoom.examId = newId;
+  pdfRoom.ab = { a: null, b: null, active: false };
+  const sheet = ensurePdfSheet(newId);
+  const ps = document.getElementById('omr-preset-select'); if (ps) ps.value = sheet.preset;
+  const kb = document.getElementById('omr-key-input'); if (kb) kb.value = sheet.keyText || '';
+  renderOmrOnly();
+  renderPdfGradeReport();
+  updateKeyCountDisplay();
+  showToast(`已切换至 ${getSessionLabel(newId)}`);
+  await loadCachedMediaForExam(newId);
+}
+
+function onChangeOmrPreset(presetKey) {
+  ensurePdfSheet(pdfRoom.examId).preset = presetKey;
+  saveState(); renderOmrOnly(); updateKeyCountDisplay();
+  showToast(`已切换答题卡：${OMR_PRESETS[presetKey].label}`);
+}
+
+async function onSelectExamMedia(slot, ev) {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  // 先清 input value 以便下次还能重选同名文件
+  ev.target.value = '';
+
+  // 第1步：立刻内存装载显示/播放（0延迟，永不因缓存失败卡死！）
+  if (pdfRoom.filesMeta[slot]?.blobUrl) URL.revokeObjectURL(pdfRoom.filesMeta[slot].blobUrl);
+  const url = URL.createObjectURL(file);
+  pdfRoom.filesMeta[slot] = { name: file.name, size: file.size, blobUrl: url, blob: file };
+  updateSlotBadge(slot, `✓ ${file.name}`);
+
+  if (slot === 'audioMp3') {
+    bindMp3Element();
+    showToast(`🎧 已装载听力：${file.name}`);
+  } else {
+    delete pdfRoom.pdfDocs[slot];
+    pdfRoom.pageNums[slot] = 1;
+    pdfRoom.activeDocSlot = slot;
+    updateDocTabStyles();
+    showToast(`📄 正在打开：${file.name}...`);
+    await loadAndRenderActivePdf();
+  }
+
+  // 第2步：后台静默写入 IndexedDB 缓存
+  dbPutFileSafe(`${pdfRoom.examId}::${slot}`, file).then(ok => {
+    if (ok) refreshCachedKeys();
+  });
+}
+
+function bindMp3Element() {
+  const audio = document.getElementById('pdf-mp3-audio');
+  const titleEl = document.getElementById('mp3-filename');
+  if (!audio || !titleEl) return;
+  const meta = pdfRoom.filesMeta.audioMp3;
+  if (meta && meta.blobUrl) {
+    audio.src = meta.blobUrl;
+    audio.playbackRate = pdfRoom.speed;
+    titleEl.textContent = `已装载：${meta.name} (${(meta.size / 1024 / 1024).toFixed(1)} MB)`;
+  } else {
+    audio.removeAttribute('src');
+    audio.load();
+    titleEl.textContent = '尚未装载听力 MP3（点上方「2. 选听力 MP3」）';
+  }
+  updateMp3AbUi();
+}
+
+function jumpMp3(delta) {
+  const a = document.getElementById('pdf-mp3-audio');
+  if (!a || !a.src) return showToast('请先选入本期听力 MP3');
+  a.currentTime = Math.max(0, Math.min(a.duration || 99999, a.currentTime + delta));
+  showToast(`${delta < 0 ? '快退' : '快进'} ${Math.abs(delta)} 秒 → ${formatTime(a.currentTime)}`, 1200);
+}
+
+function cycleMp3Speed() {
+  const speeds = [0.8, 0.9, 1.0, 1.15, 1.25];
+  pdfRoom.speed = speeds[(speeds.indexOf(pdfRoom.speed) + 1) % speeds.length];
+  const a = document.getElementById('pdf-mp3-audio'); if (a) a.playbackRate = pdfRoom.speed;
+  const btn = document.getElementById('mp3-speed-btn'); if (btn) btn.textContent = `${pdfRoom.speed}x`;
+  showToast(`听力倍速：${pdfRoom.speed}x`, 1200);
+}
+
+function setMp3Point(which) {
+  const a = document.getElementById('pdf-mp3-audio');
+  if (!a || !a.src) return showToast('请先选入本期听力 MP3');
+  if (which === 'a') { pdfRoom.ab.a = a.currentTime; pdfRoom.ab.active = false; showToast(`已设复读起点 A = ${formatTime(a.currentTime)}`); }
+  else {
+    if (pdfRoom.ab.a === null) return showToast('请先点「设A点」');
+    if (a.currentTime <= pdfRoom.ab.a + 0.5) return showToast('B点须晚于A点');
+    pdfRoom.ab.b = a.currentTime; pdfRoom.ab.active = true; a.currentTime = pdfRoom.ab.a; a.play();
+    showToast(`开始循环复读 ${formatTime(pdfRoom.ab.a)} ⇄ ${formatTime(pdfRoom.ab.b)}`);
+  }
+  updateMp3AbUi();
+}
+
+function clearMp3Ab() { pdfRoom.ab = { a: null, b: null, active: false }; updateMp3AbUi(); showToast('已取消 A-B 复读'); }
+function onMp3TimeUpdate() { const a = document.getElementById('pdf-mp3-audio'); if (a && pdfRoom.ab.active && a.currentTime >= pdfRoom.ab.b) a.currentTime = pdfRoom.ab.a; }
+function updateMp3AbUi() {
+  const st = document.getElementById('mp3-ab-status'); const cb = document.getElementById('mp3-btn-clear');
+  if (!st || !cb) return;
+  if (pdfRoom.ab.active) { st.textContent = `🔁 正在循环复读：${formatTime(pdfRoom.ab.a)} ⇄ ${formatTime(pdfRoom.ab.b)}`; cb.classList.remove('hidden'); }
+  else if (pdfRoom.ab.a !== null) { st.textContent = `已设 A=${formatTime(pdfRoom.ab.a)}，播到句尾后点「设B复读」`; cb.classList.remove('hidden'); }
+  else { st.textContent = '支持快退5秒 · 倍速 · A-B 句段复读'; cb.classList.add('hidden'); }
+}
+
+function updateDocTabStyles() {
+  DOC_SLOTS.forEach(d => {
+    const b = document.getElementById(`doctab-${d.key}`);
+    if (b) b.className = d.key === pdfRoom.activeDocSlot
+      ? 'px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white'
+      : 'px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-600';
+  });
+}
+
+async function switchActivePdfSlot(slot) {
+  pdfRoom.activeDocSlot = slot;
+  updateDocTabStyles();
+  await loadAndRenderActivePdf();
+}
+
+async function loadAndRenderActivePdf() {
+  const slot = pdfRoom.activeDocSlot;
+  const meta = pdfRoom.filesMeta[slot];
+  const emptyEl = document.getElementById('pdf-empty-hint');
+  const canvas = document.getElementById('pdf-render-canvas');
+  const totalEl = document.getElementById('pdf-page-total');
+  const pageInput = document.getElementById('pdf-page-input');
+  const rawLink = document.getElementById('pdf-raw-open');
+  if (!canvas || !emptyEl) return;
+
+  if (!meta) {
+    canvas.classList.add('hidden');
+    emptyEl.classList.remove('hidden');
+    if (totalEl) totalEl.textContent = '0';
+    if (pageInput) pageInput.value = '1';
+    if (rawLink) rawLink.classList.add('hidden');
+    return;
+  }
+
+  if (rawLink) { rawLink.href = meta.blobUrl; rawLink.classList.remove('hidden'); }
+
+  if (!window.pdfjsLib) {
+    emptyEl.innerHTML = `<div class="p-4 text-xs text-slate-700">当前网络未能加载 PDF 渲染组件，请点右上角「原文件」直接打开 PDF。</div>`;
+    emptyEl.classList.remove('hidden'); canvas.classList.add('hidden'); return;
+  }
+
+  try {
+    if (!pdfRoom.pdfDocs[slot]) {
+      const buf = await meta.blob.arrayBuffer();
+      pdfRoom.pdfDocs[slot] = await pdfjsLib.getDocument({
+        data: buf,
+        cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+        cMapPacked: true
+      }).promise;
+    }
+    const doc = pdfRoom.pdfDocs[slot];
+    const total = doc.numPages;
+    const pNum = Math.max(1, Math.min(total, pdfRoom.pageNums[slot] || 1));
+    pdfRoom.pageNums[slot] = pNum;
+
+    if (totalEl) totalEl.textContent = String(total);
+    if (pageInput) { pageInput.value = String(pNum); pageInput.max = String(total); }
+    emptyEl.classList.add('hidden'); canvas.classList.remove('hidden');
+
+    const seq = ++pdfRoom.renderSeq;
+    const page = await doc.getPage(pNum);
+    if (seq !== pdfRoom.renderSeq) return;
+
+    const wrap = document.getElementById('pdf-canvas-wrap');
+    const availW = Math.max(290, (wrap?.clientWidth || 350) - 20);
+    const baseVp = page.getViewport({ scale: 1 });
+    const fitScale = (availW / baseVp.width) * pdfRoom.scale;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
+    const vp = page.getViewport({ scale: fitScale * dpr });
+
+    canvas.width = Math.floor(vp.width);
+    canvas.height = Math.floor(vp.height);
+    canvas.style.width = Math.floor(vp.width / dpr) + 'px';
+    canvas.style.height = Math.floor(vp.height / dpr) + 'px';
+
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+  } catch (e) {
+    emptyEl.innerHTML = `<div class="p-4 text-xs text-rose-600">PDF 渲染提示：${escapeHtml(e.message)}。请点右上角「原文件」直接查看。</div>`;
+    emptyEl.classList.remove('hidden'); canvas.classList.add('hidden');
+  }
+}
+
+function changePdfPage(delta) {
+  const doc = pdfRoom.pdfDocs[pdfRoom.activeDocSlot];
+  if (!doc) return showToast('请先选择该栏目的 PDF 文件');
+  pdfRoom.pageNums[pdfRoom.activeDocSlot] = Math.max(1, Math.min(doc.numPages, (pdfRoom.pageNums[pdfRoom.activeDocSlot] || 1) + delta));
+  loadAndRenderActivePdf();
+  const wrap = document.getElementById('pdf-canvas-wrap'); if (wrap) wrap.scrollTop = 0;
+}
+function jumpPdfPage(v) { const n = parseInt(v, 10); if (!isNaN(n)) { pdfRoom.pageNums[pdfRoom.activeDocSlot] = n; loadAndRenderActivePdf(); } }
+function zoomPdf(d) { pdfRoom.scale = d === 0 ? 1.0 : Math.max(0.7, Math.min(2.2, Number((pdfRoom.scale + d).toFixed(2)))); loadAndRenderActivePdf(); }
+
+function setMobilePane(mode, rerenderPdf = true) {
+  pdfRoom.mobilePane = mode;
+  const pdfWrap = document.getElementById('pane-pdf-wrap');
+  const omrWrap = document.getElementById('pane-omr-wrap');
+  ['both', 'pdf', 'omr'].forEach(k => {
+    const b = document.getElementById(`mpane-${k}`);
+    if (b) b.className = k === mode ? 'py-2 rounded-lg bg-indigo-600 text-white' : 'py-2 rounded-lg text-slate-600';
+  });
+  if (pdfWrap) pdfWrap.classList.toggle('hidden', mode === 'omr');
+  if (omrWrap) omrWrap.classList.toggle('hidden', mode === 'pdf');
+  if (rerenderPdf && mode !== 'omr') loadAndRenderActivePdf();
+}
+
+async function clearCurrentExamCache() {
+  if (!confirm(`清除 ${getSessionLabel(pdfRoom.examId)} 在本机缓存的 PDF 与 MP3？`)) return;
+  await dbDeleteByPrefixSafe(`${pdfRoom.examId}::`);
+  await loadCachedMediaForExam(pdfRoom.examId);
+  refreshCachedKeys();
+  showToast('已清除本期本地文件缓存');
+}
+
+function togglePdfTimer() {
+  pdfRoom.timerRunning = !pdfRoom.timerRunning;
+  const btn = document.getElementById('pdf-timer-btn'); if (btn) btn.textContent = pdfRoom.timerRunning ? '暂停' : '开始';
+  if (pdfRoom.timerRunning && !pdfRoom.timerId) {
+    pdfRoom.timerId = setInterval(() => {
+      if (!pdfRoom.timerRunning) return;
+      pdfRoom.timerSec = Math.max(0, pdfRoom.timerSec - 1);
+      const el = document.getElementById('pdf-timer-display'); if (el) el.textContent = formatTime(pdfRoom.timerSec);
+    }, 1000);
+  }
+}
+function resetPdfTimer() {
+  pdfRoom.timerRunning = false; pdfRoom.timerSec = 105 * 60;
+  const el = document.getElementById('pdf-timer-display'); if (el) el.textContent = formatTime(pdfRoom.timerSec);
+  const btn = document.getElementById('pdf-timer-btn'); if (btn) btn.textContent = '开始';
+}
+
+/* ---------- 电子答题卡（OMR） ---------- */
+function getActivePresetObj() { return OMR_PRESETS[ensurePdfSheet(pdfRoom.examId).preset] || OMR_PRESETS.legacy107; }
+
+function renderOmrOnly() {
+  const sheet = ensurePdfSheet(pdfRoom.examId);
+  const preset = getActivePresetObj();
+  const totalQ = preset.sections[preset.sections.length - 1].end;
+  const filled = Object.keys(sheet.answers).filter(k => Number(k) <= totalQ).length;
+  const progEl = document.getElementById('omr-progress-text');
+  if (progEl) progEl.textContent = `已涂 ${filled} / ${totalQ} 题`;
+
+  const tabEl = document.getElementById('omr-sec-tabs');
+  if (tabEl) {
+    tabEl.innerHTML = preset.sections.map(sec => {
+      let cnt = 0; for (let i = sec.start; i <= sec.end; i++) if (sheet.answers[i]) cnt++;
+      const act = pdfRoom.omrSection === sec.name;
+      return `<button type="button" onclick="switchOmrSection('${sec.name}')" class="py-1.5 px-1 rounded-lg border ${act ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 text-slate-700 border-slate-200'}"><div>${sec.name}</div><div class="text-[10px] opacity-80">${cnt}/${sec.end - sec.start + 1}</div></button>`;
+    }).join('');
+  }
+
+  const gridEl = document.getElementById('omr-grid-container');
+  const curSec = preset.sections.find(s => s.name === pdfRoom.omrSection) || preset.sections[0];
+  if (!gridEl || !curSec) return;
+
+  const rep = sheet.lastReport;
+  const keys = parseAnswerKey(sheet.keyText || '', totalQ);
+  let html = '';
+  for (let qNo = curSec.start; qNo <= curSec.end; qNo++) {
+    const isThree = curSec.threeChoiceRange && qNo >= curSec.threeChoiceRange[0] && qNo <= curSec.threeChoiceRange[1];
+    const maxOpt = isThree ? 3 : 4;
+    const picked = sheet.answers[qNo];
+    const correct = rep ? keys[qNo - 1] : null;
+    const isW = rep && correct && picked !== correct;
+    const isR = rep && correct && picked === correct;
+
+    html += `
+      <div class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl border ${isW ? 'border-rose-300 bg-rose-50/70' : (isR ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-100 bg-slate-50/50')}">
+        <div class="flex items-center gap-1 min-w-[66px]">
+          <span class="text-xs font-bold ${isW ? 'text-rose-700' : 'text-slate-700'}">第 ${qNo} 题</span>
+          ${isThree ? '<span class="text-[9px] px-1 rounded bg-sky-100 text-sky-700">3选</span>' : ''}
+        </div>
+        <div class="flex items-center gap-1.5">
+          ${[1, 2, 3, 4].slice(0, maxOpt).map(opt => {
+            const sel = picked === opt;
+            const isAns = rep && correct === opt;
+            let cls = 'bg-white border-slate-300 text-slate-700';
+            if (sel && isW) cls = 'bg-rose-600 border-rose-600 text-white font-bold';
+            else if (sel) cls = 'bg-indigo-600 border-indigo-600 text-white font-bold';
+            else if (isAns) cls = 'bg-emerald-100 border-emerald-500 text-emerald-800 font-bold';
+            return `<button type="button" onclick="pickOmr(${qNo}, ${opt})" class="w-9 h-8 rounded-lg border text-xs ${cls}">${opt}</button>`;
+          }).join('')}
+        </div>
+        ${isW ? `<span class="text-[11px] font-bold text-emerald-700 shrink-0">正:${correct}</span>` : (isR ? '<span class="text-xs text-emerald-600 shrink-0">✓</span>' : '<span class="w-5"></span>')}
+      </div>`;
+  }
+  gridEl.innerHTML = html;
+}
+
+function switchOmrSection(name) { pdfRoom.omrSection = name; renderOmrOnly(); }
+function pickOmr(qNo, opt) {
+  const sheet = ensurePdfSheet(pdfRoom.examId);
+  if (sheet.answers[qNo] === opt) delete sheet.answers[qNo]; else sheet.answers[qNo] = opt;
+  saveState(); renderOmrOnly();
+}
+function clearCurrentOmrAnswers() {
+  if (!confirm('清空本期所有涂卡记录？')) return;
+  const s = ensurePdfSheet(pdfRoom.examId); s.answers = {}; s.lastReport = null; saveState();
+  renderOmrOnly(); renderPdfGradeReport(); showToast('已清空本期涂卡');
+}
+function parseAnswerKey(raw, maxLen) {
+  if (!raw || !raw.trim()) return [];
+  const numbered = [...raw.matchAll(/(?:^|[\s,;，；])(?:\(?\d{1,3}\)?[\.\、\:\-\)\s]+?)([1-4])(?=$|[\s,;，；])/g)];
+  if (numbered.length >= 5) return numbered.map(m => parseInt(m[1], 10)).slice(0, maxLen);
+  return (raw.match(/[1-4]/g) || []).map(d => parseInt(d, 10)).slice(0, maxLen);
+}
+function onEditAnswerKey(val) { ensurePdfSheet(pdfRoom.examId).keyText = val; saveState(); updateKeyCountDisplay(); }
+function updateKeyCountDisplay() {
+  const sheet = ensurePdfSheet(pdfRoom.examId);
+  const totalQ = getActivePresetObj().sections.slice(-1)[0].end;
+  const el = document.getElementById('key-parse-count');
+  if (el) el.textContent = `已识别 ${parseAnswerKey(sheet.keyText || '', totalQ).length} / ${totalQ} 题`;
+}
+
+function gradePdfExam() {
+  const sheet = ensurePdfSheet(pdfRoom.examId);
+  const preset = getActivePresetObj();
+  const totalQ = preset.sections.slice(-1)[0].end;
+  const keys = parseAnswerKey(sheet.keyText || '', totalQ);
+  if (!keys.length) return showToast('请先在上方粘贴标准答案数字（如 1324...）', 3200);
+
+  const major = { '言語知識': { c: 0, t: 0 }, '読解': { c: 0, t: 0 }, '聴解': { c: 0, t: 0 } };
+  const wrongList = []; let checked = 0; let right = 0;
+
+  preset.sections.forEach(sec => {
+    for (let qNo = sec.start; qNo <= sec.end; qNo++) {
+      const ans = keys[qNo - 1]; if (!ans) continue;
+      checked++; major[sec.major].t++;
+      const picked = sheet.answers[qNo];
+      if (picked === ans) { right++; major[sec.major].c++; }
+      else {
+        wrongList.push({ qNo, section: sec.name, userAns: picked || null, correctAns: ans });
+        const mk = `${pdfRoom.examId}::${qNo}`;
+        state.pdfMistakes[mk] = {
+          examId: pdfRoom.examId, examLabel: getSessionLabel(pdfRoom.examId),
+          qNo, section: sec.name, userAns: picked || null, correctAns: ans,
+          note: state.pdfMistakes[mk]?.note || '', mastered: false, updatedAt: Date.now()
+        };
+      }
+    }
+  });
+
+  const rate = checked ? right / checked : 0;
+  const lang = major['言語知識'].t ? Math.round((major['言語知識'].c / major['言語知識'].t) * 60) : Math.round(rate * 60);
+  const read = major['読解'].t ? Math.round((major['読解'].c / major['読解'].t) * 60) : Math.round(rate * 60);
+  const listen = major['聴解'].t ? Math.round((major['聴解'].c / major['聴解'].t) * 60) : Math.round(rate * 60);
+  const totalScaled = lang + read + listen;
+  const passed = totalScaled >= 90 && lang >= 19 && read >= 19 && listen >= 19;
+
+  sheet.lastReport = { totalChecked: checked, totalCorrect: right, accuracy: Math.round(rate * 100), lang, read, listen, totalScaled, passed, cefr: getCefrLabel(totalScaled, passed), wrongList };
+  saveState(); renderOmrOnly(); renderPdfGradeReport();
+  showToast(`评分完成：${totalScaled}/180 (${sheet.lastReport.cefr})，错 ${wrongList.length} 题`);
+}
+
+function renderPdfGradeReport() {
+  const wrap = document.getElementById('pdf-grade-report'); if (!wrap) return;
+  const r = ensurePdfSheet(pdfRoom.examId).lastReport;
+  if (!r) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `
+    <div class="mt-2 p-3.5 rounded-2xl border-2 ${r.passed ? 'border-emerald-300 bg-emerald-50/60' : 'border-rose-300 bg-rose-50/60'} space-y-2.5">
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <div class="text-xs font-bold ${r.passed ? 'text-emerald-800' : 'text-rose-800'}">${r.passed ? '✓ 预计合格' : '✗ 暂未达标'} · ${r.cefr}</div>
+          <div class="text-xl font-extrabold text-slate-900">${r.totalScaled} <span class="text-xs font-normal text-slate-500">/180分</span></div>
+          <div class="text-xs text-slate-600">对 ${r.totalCorrect}/${r.totalChecked}（${r.accuracy}%）· 错 <strong class="text-rose-600">${r.wrongList.length}</strong> 题</div>
+        </div>
+        <div class="text-right text-[11px] font-semibold text-slate-700">
+          <div>言語知識：${r.lang}/60</div><div>読解：${r.read}/60</div><div>聴解：${r.listen}/60</div>
+        </div>
+      </div>
+      ${r.wrongList.length ? `
+        <div class="bg-white rounded-xl p-3 border border-rose-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-rose-700">❌ 错题号清单（已入错题集）</span>
+            <button type="button" onclick="copyPdfWrongSummary()" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-[11px] font-semibold">📋 复制发AI精讲</button>
+          </div>
+          <div class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+            ${r.wrongList.map(w => `<span class="px-2 py-0.5 rounded-lg bg-rose-50 border border-rose-200 text-[11px]"><strong class="text-rose-700">第${w.qNo}题</strong>: 选${w.userAns||'空'}/<strong class="text-emerald-700">正${w.correctAns}</strong></span>`).join('')}
+          </div>
+        </div>` : '<div class="text-xs font-bold text-emerald-700">🎉 已核对题目全部正确！</div>'}
+    </div>`;
+}
+
+function copyPdfWrongSummary() {
+  const r = ensurePdfSheet(pdfRoom.examId).lastReport; if (!r || !r.wrongList.length) return;
+  const txt = `我在刷【${getSessionLabel(pdfRoom.examId)} JLPT N2真题】时做错了以下 ${r.wrongList.length} 道题，请帮我拆解每题4个选项的知识点：\n` +
+    r.wrongList.map(w => `第${w.qNo}题(${w.section})：我选${w.userAns||'未答'}，正解${w.correctAns}`).join('\n');
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => showToast('✅ 已复制错题清单！')).catch(() => prompt('请全选复制：', txt));
+  else prompt('请全选复制：', txt);
+}
+
+/* =========================================================================
+   7. 内置日语语音朗读引擎（预测卷 & JSON 卷）
+   ========================================================================= */
+const audioState = { playingQId: null, rate: 1.0, showScript: {}, voices: [], speechSupported: 'speechSynthesis' in window };
+function loadJaVoices() { if (audioState.speechSupported) audioState.voices = (window.speechSynthesis.getVoices() || []).filter(v => (v.lang || '').toLowerCase().startsWith('ja')); }
+if (audioState.speechSupported) { loadJaVoices(); window.speechSynthesis.onvoiceschanged = loadJaVoices; }
+function stopTtsListening(re = false) { if (audioState.speechSupported) window.speechSynthesis.cancel(); audioState.playingQId = null; if (re) render(); }
+function findQuestionById(qId) {
+  if (state.quiz) { const f = state.quiz.paper.questions.find(q => q.id === qId); if (f) return f; }
+  if (state.lastResult) { const f = state.lastResult.items.find(i => i.q.id === qId); if (f) return f.q; }
+  if (state.mistakes[qId]) return state.mistakes[qId].question;
+  for (const p of getAllPapers()) { const f = p.questions.find(q => q.id === qId); if (f) return f; }
+  return null;
+}
+function togglePlayTts(qId) {
+  if (audioState.playingQId === qId) return stopTtsListening(true);
+  const q = findQuestionById(qId); if (!q || !Array.isArray(q.dialogue)) return;
+  if (!audioState.speechSupported) return showToast('请在 Safari/Chrome 浏览器中打开以播放语音', 3000);
+  stopTtsListening(false); loadJaVoices(); audioState.playingQId = qId; render(); speakTtsLine(q, 0);
+}
+function speakTtsLine(q, idx) {
+  if (audioState.playingQId !== q.id) return;
+  if (idx >= q.dialogue.length) { audioState.playingQId = null; render(); return; }
+  const line = q.dialogue[idx];
+  const st = document.getElementById(`listen-status-${q.id}`); if (st) st.textContent = `正在朗读 (${idx+1}/${q.dialogue.length})：${line.speaker}`;
+  const u = new SpeechSynthesisUtterance(line.text); u.lang = 'ja-JP'; u.rate = audioState.rate;
+  if (audioState.voices.length) u.voice = audioState.voices[0];
+  u.pitch = line.speaker === '男' ? 0.85 : (line.speaker === '女' ? 1.15 : 1.0);
+  u.onend = () => { if (audioState.playingQId === q.id) setTimeout(() => speakTtsLine(q, idx + 1), 350); };
+  u.onerror = () => stopTtsListening(true);
+  window.speechSynthesis.speak(u);
+}
+function setTtsRate(r) { audioState.rate = r; const id = audioState.playingQId; if (id) { stopTtsListening(false); togglePlayTts(id); } else render(); }
+function toggleTtsScript(qId) { audioState.showScript[qId] = !audioState.showScript[qId]; render(); }
+
+function renderTtsPlayer(q, isReview = false) {
+  const playing = audioState.playingQId === q.id;
+  const open = isReview || !!audioState.showScript[q.id];
+  return `
+    <div class="mb-4 rounded-2xl border-2 ${playing ? 'border-indigo-500 bg-indigo-50/70' : 'border-indigo-200 bg-indigo-50/40'} p-3.5">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-3">
+          <button type="button" onclick="togglePlayTts('${q.id}')" class="w-11 h-11 rounded-full text-white font-bold shadow ${playing ? 'bg-rose-600' : 'bg-indigo-600'}">${playing ? '⏹' : '▶'}</button>
+          <div>
+            <div class="font-bold text-sm text-indigo-950">🎧 日语听力播放器</div>
+            <div id="listen-status-${q.id}" class="text-xs text-indigo-700">${playing ? '正在朗读...' : '点左侧按钮收听日语对话（关闭手机静音）'}</div>
+          </div>
+        </div>
+        <div class="flex gap-1 text-xs">
+          ${[0.8, 1.0, 1.15].map(r => `<button type="button" onclick="setTtsRate(${r})" class="px-2 py-1 rounded-lg border font-semibold ${audioState.rate === r ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200'}">${r}x</button>`).join('')}
+        </div>
+      </div>
+      ${q.listeningIntro ? `<div class="mt-2 text-xs bg-white/80 rounded-lg px-3 py-1.5 border border-indigo-100 jp-text"><strong>场景：</strong>${escapeHtml(q.listeningIntro)}</div>` : ''}
+      ${!isReview ? `<div class="mt-2 text-right"><button type="button" onclick="toggleTtsScript('${q.id}')" class="text-xs text-indigo-700 font-semibold">${open ? '隐藏原文' : '📄 临时看台本'}</button></div>` : ''}
+      ${open && Array.isArray(q.dialogue) ? `
+        <div class="mt-2 p-3 rounded-xl bg-white border border-indigo-100 space-y-1 text-xs sm:text-sm">
+          ${q.dialogue.map(l => `<div class="jp-text"><strong class="${l.speaker==='男'?'text-blue-700':(l.speaker==='女'?'text-rose-600':'text-slate-500')}">${escapeHtml(l.speaker)}：</strong>${escapeHtml(l.text)}</div>`).join('')}
+          ${isReview && q.translation ? `<div class="mt-2 pt-2 border-t border-slate-100 text-xs text-slate-600 whitespace-pre-line">${escapeHtml(q.translation)}</div>` : ''}
+        </div>` : ''}
+    </div>`;
+}
+
+/* =========================================================================
+   8. 预测卷 / 真题32期 / 错题集 / 刷题 / 管理
+   ========================================================================= */
+function renderPredictView() {
+  const papers = getAllPapers().filter(p => p.category === 'predict' || p.id.startsWith('predict-'));
+  return `
+    <div class="space-y-4">
+      <div class="rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 shadow-lg flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-xl font-bold">🎯 2026.12 N2 预测模拟题（共 ${papers.length} 套·全含听力）</h2>
+          <p class="text-xs text-slate-300 mt-1">交卷自动评分（180分+CEFR），列出全部错题并逐项拆解 4 个选项知识点。</p>
+        </div>
+        <button type="button" onclick="switchTab('pdfroom')" class="px-4 py-2 rounded-xl bg-white text-slate-900 font-bold text-xs">📄 去刷 PDF+MP3 真题</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        ${papers.map((p, idx) => {
+          const hist = state.history[p.id];
+          return `
+            <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold">预测卷 ${String(idx+1).padStart(2,'0')}</span>
+                  <span class="text-xs text-amber-600">${escapeHtml(p.difficulty || '★★★★☆')}</span>
+                </div>
+                <h4 class="font-bold text-slate-900 text-sm sm:text-base">${escapeHtml(p.title)}</h4>
+                <p class="text-xs text-slate-500 mt-1 mb-3">${escapeHtml(p.subtitle || '')}</p>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs text-slate-500 mb-2.5 pt-2 border-t border-slate-100">
+                  <span>共 ${p.questions.length} 题 · 🎧含听力</span>
+                  ${hist ? `<span class="font-bold ${hist.bestPassed?'text-emerald-600':'text-rose-600'}">最高 ${hist.bestScaled}/180</span>` : '<span>未作答</span>'}
+                </div>
+                <button type="button" onclick="startQuiz('${p.id}','exam')" class="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold">开始刷题</button>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function renderArchiveView() {
+  const customMap = new Map(getAllPapers().map(p => [p.id, p]));
+  return `
+    <div class="space-y-4">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">📚 2010年7月 — 2026年7月 全 32 期真题</h2>
+          <p class="text-xs text-slate-600 mt-0.5">点击任意期数，直接进入对应的 PDF + 真人 MP3 模考室与标准答题卡。</p>
+        </div>
+        <button type="button" onclick="openImportModal(null)" class="px-3.5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold">＋ 导入 JSON</button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        ${TIMELINE_SESSIONS.map(s => {
+          if (s.cancelled) return `<div class="rounded-2xl border border-dashed border-slate-300 bg-slate-100 p-4 opacity-70"><div class="font-bold text-slate-500">${s.label} · 停考</div></div>`;
+          const hasCache = state.cachedDbKeys.some(k => String(k).startsWith(s.id + '::'));
+          const pdfRep = state.pdfSheets[s.id]?.lastReport;
+          const jsonPaper = customMap.get(s.id);
+          return `
+            <div class="rounded-2xl border ${hasCache || jsonPaper ? 'border-indigo-300 bg-white' : 'border-slate-200 bg-white'} p-4 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-bold text-slate-900">${s.label}</span>
+                  ${hasCache ? '<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">已缓存</span>' : ''}
+                </div>
+                <div class="text-xs text-slate-500">${pdfRep ? `得分：<strong class="${pdfRep.passed?'text-emerald-600':'text-rose-600'}">${pdfRep.totalScaled}/180</strong>` : (s.note || '可导入 PDF+MP3')}</div>
+              </div>
+              <div class="flex gap-1.5 mt-3">
+                <button type="button" onclick="openPdfExam('${s.id}')" class="flex-1 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold">📄 PDF模考</button>
+                ${jsonPaper ? `<button type="button" onclick="startQuiz('${s.id}','exam')" class="px-2.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">JSON刷</button>` : ''}
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function renderMistakesView() {
+  const pdfList = Object.entries(state.pdfMistakes).map(([k, v]) => ({ key: k, ...v })).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  const intList = Object.values(state.mistakes).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  return `
+    <div class="space-y-4">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-lg font-bold text-slate-900">📕 智能错题集</h2>
+        <div class="flex gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+          <button type="button" onclick="state.mistakeViewTab='pdf';render()" class="px-3 py-1.5 rounded-lg ${state.mistakeViewTab==='pdf'?'bg-white shadow-sm':'text-slate-600'}">PDF错题(${pdfList.length})</button>
+          <button type="button" onclick="state.mistakeViewTab='interactive';render()" class="px-3 py-1.5 rounded-lg ${state.mistakeViewTab==='interactive'?'bg-white shadow-sm':'text-slate-600'}">预测/JSON错题(${intList.length})</button>
+        </div>
+      </div>
+      ${state.mistakeViewTab === 'pdf'
+        ? (pdfList.length ? `<div class="space-y-3">${pdfList.map(m => `
+            <div class="bg-white rounded-2xl border ${m.mastered?'border-emerald-200 opacity-75':'border-rose-200'} p-4 space-y-2">
+              <div class="flex flex-wrap justify-between gap-2 text-xs">
+                <div><span class="px-2 py-0.5 rounded bg-slate-900 text-white font-bold">${escapeHtml(m.examLabel)}</span> <strong class="text-rose-700">第${m.qNo}题(${escapeHtml(m.section)})</strong> 我选${m.userAns||'空'}/正<strong class="text-emerald-700">${m.correctAns}</strong></div>
+                <div class="flex gap-1.5">
+                  <button type="button" onclick="openPdfExam('${m.examId}')" class="px-2 py-1 rounded bg-indigo-50 text-indigo-700 font-semibold">看原卷</button>
+                  <button type="button" onclick="togglePdfMistakeMastered('${m.key}')" class="px-2 py-1 rounded border">${m.mastered?'✓已掌握':'标掌握'}</button>
+                  <button type="button" onclick="deletePdfMistake('${m.key}')" class="text-slate-400">删</button>
+                </div>
+              </div>
+              <textarea rows="2" onchange="updatePdfMistakeNote('${m.key}',this.value)" placeholder="记录本题知识点笔记..." class="w-full text-xs border border-slate-200 rounded-xl p-2 bg-slate-50">${escapeHtml(m.note||'')}</textarea>
+            </div>`).join('')}</div>`
+          : `<div class="bg-white rounded-2xl border border-slate-200 p-10 text-center text-sm text-slate-500">暂无 PDF 真题错题。</div>`)
+        : (intList.length ? `<div class="space-y-4">
+            <div class="flex justify-end"><button type="button" onclick="startMistakeRetry()" class="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-semibold">🔥 重刷待攻克错题</button></div>
+            ${intList.map((it, idx) => renderDetailedQuestionCard({ q: it.question, indexLabel: `错题#${idx+1}`, userChoice: it.lastWrongChoice, sourceLabel: it.paperTitle, mistakeControls: { qId: it.question.id, mastered: it.mastered } })).join('')}
+          </div>`
+          : `<div class="bg-white rounded-2xl border border-slate-200 p-10 text-center text-sm text-slate-500">暂无预测卷/JSON错题。</div>`)}
+    </div>`;
+}
+
+function togglePdfMistakeMastered(k) { if (state.pdfMistakes[k]) { state.pdfMistakes[k].mastered = !state.pdfMistakes[k].mastered; saveState(); render(); } }
+function deletePdfMistake(k) { delete state.pdfMistakes[k]; saveState(); render(); }
+function updatePdfMistakeNote(k, v) { if (state.pdfMistakes[k]) { state.pdfMistakes[k].note = v; saveState(); } }
+function toggleMistakeMastered(qId) { if (state.mistakes[qId]) { state.mistakes[qId].mastered = !state.mistakes[qId].mastered; saveState(); render(); } }
+function deleteMistake(qId) { delete state.mistakes[qId]; saveState(); render(); }
+function startMistakeRetry() {
+  const unm = Object.values(state.mistakes).filter(m => !m.mastered);
+  if (!unm.length) return showToast('没有待攻克错题啦！');
+  launchQuizPaper({ id: 'mistake-retry', category: 'retry', title: `错题专项重刷 (${unm.length}题)`, durationMin: Math.max(10, unm.length * 2), questions: unm.map(m => m.question) }, 'retry');
+}
+
+function startQuiz(id, mode = 'exam') { const p = getPaperById(id); if (p) launchQuizPaper(p, mode); }
+function launchQuizPaper(paper, mode) {
+  stopTtsListening(false);
+  if (state.quiz && state.quiz.timerId) clearInterval(state.quiz.timerId);
+  const sec = (paper.durationMin || Math.max(15, paper.questions.length * 2)) * 60;
+  state.quiz = { paper, mode, currentIndex: 0, answers: {}, remainingSec: sec, totalSec: sec, timerId: null };
+  state.quiz.timerId = setInterval(() => {
+    if (!state.quiz) return;
+    state.quiz.remainingSec--;
+    const el = document.getElementById('quiz-timer'); if (el) el.textContent = formatTime(state.quiz.remainingSec);
+    if (state.quiz.remainingSec <= 0) submitQuiz();
+  }, 1000);
+  state.tab = 'quiz'; render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderQuizView() {
+  const qz = state.quiz; if (!qz) return '';
+  const qs = qz.paper.questions; const q = qs[qz.currentIndex]; const ans = qz.answers[q.id];
+  return `
+    <div class="space-y-4">
+      <div class="bg-white rounded-2xl border border-slate-200 p-3.5 shadow-sm flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <button type="button" onclick="if(confirm('退出本次作答？'))switchTab('predict')" class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs">← 返回</button>
+          <div class="font-bold text-sm truncate">${escapeHtml(qz.paper.title)}</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-1.5 rounded-xl bg-slate-100 font-mono text-xs font-bold">⏱ <span id="quiz-timer">${formatTime(qz.remainingSec)}</span></span>
+          <button type="button" onclick="confirmSubmitQuiz()" class="px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold">交卷评分</button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="px-2.5 py-0.5 rounded-lg bg-slate-900 text-white text-xs font-bold">第 ${qz.currentIndex+1}/${qs.length} 题</span>
+          <span class="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold">${escapeHtml(q.section)}</span>
+          <span class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 text-xs">${escapeHtml(q.qType)}</span>
+        </div>
+        ${q.section === '聴解' ? renderTtsPlayer(q, false) : ''}
+        ${q.passage ? `<div class="jp-text p-3.5 rounded-xl bg-amber-50/60 border border-amber-200 text-sm whitespace-pre-line">${escapeHtml(q.passage)}</div>` : ''}
+        <div class="jp-text text-base sm:text-lg font-medium">${renderStemHtml(q.stem)}</div>
+        <div class="space-y-2.5">
+          ${q.options.map((opt, idx) => `
+            <button type="button" onclick="selectAnswer('${q.id}',${idx})" class="w-full min-h-[52px] text-left p-3.5 rounded-xl border-2 flex items-start gap-3 ${ans===idx?'border-indigo-600 bg-indigo-50/80':'border-slate-200'}">
+              <span class="w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-sm font-bold ${ans===idx?'bg-indigo-600 text-white':'bg-slate-100 text-slate-700'}">${idx+1}</span>
+              <span class="jp-text text-sm sm:text-base pt-0.5">${renderStemHtml(opt.text)}</span>
+            </button>`).join('')}
+        </div>
+        <div class="flex justify-between pt-4 border-t border-slate-100">
+          <button type="button" onclick="gotoQuestion(${qz.currentIndex-1})" ${qz.currentIndex===0?'disabled':''} class="px-4 py-2 rounded-xl border border-slate-300 text-sm disabled:opacity-40">← 上一题</button>
+          ${qz.currentIndex === qs.length - 1
+            ? `<button type="button" onclick="confirmSubmitQuiz()" class="px-5 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold">交卷评分 ✓</button>`
+            : `<button type="button" onclick="gotoQuestion(${qz.currentIndex+1})" class="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold">下一题 →</button>`}
+        </div>
+      </div>
+    </div>`;
+}
+function selectAnswer(qId, i) { if (state.quiz) { state.quiz.answers[qId] = i; render(); } }
+function gotoQuestion(idx) { if (state.quiz && idx >= 0 && idx < state.quiz.paper.questions.length) { stopTtsListening(false); state.quiz.currentIndex = idx; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }
+function confirmSubmitQuiz() {
+  const qz = state.quiz; if (!qz) return;
+  const un = qz.paper.questions.length - Object.keys(qz.answers).length;
+  if (un > 0 && !confirm(`还有 ${un} 题未答，确定交卷评分吗？`)) return;
+  submitQuiz();
+}
+function submitQuiz() {
+  stopTtsListening(false);
+  const qz = state.quiz; if (!qz) return;
+  if (qz.timerId) { clearInterval(qz.timerId); qz.timerId = null; }
+  const qs = qz.paper.questions;
+  const major = { '言語知識': { c: 0, t: 0 }, '読解': { c: 0, t: 0 }, '聴解': { c: 0, t: 0 } };
+  let totalCorrect = 0; const items = []; const wrongItems = [];
+  qs.forEach((q, idx) => {
+    const u = qz.answers[q.id]; const ok = u === q.answer; if (ok) totalCorrect++;
+    const mk = (q.section === '文字・語彙' || q.section === '文法') ? '言語知識' : (q.section === '聴解' ? '聴解' : '読解');
+    major[mk].t++; if (ok) major[mk].c++;
+    const rec = { q, index: idx + 1, userChoice: u, isCorrect: ok }; items.push(rec);
+    if (!ok) {
+      wrongItems.push(rec);
+      const prev = state.mistakes[q.id];
+      state.mistakes[q.id] = { question: q, paperId: qz.paper.id, paperTitle: qz.paper.title, wrongCount: prev ? prev.wrongCount + 1 : 1, lastWrongChoice: u, mastered: false, updatedAt: Date.now() };
+    } else if (qz.mode === 'retry' && state.mistakes[q.id]) state.mistakes[q.id].mastered = true;
+  });
+  const rate = qs.length ? totalCorrect / qs.length : 0;
+  const lang = major['言語知識'].t ? Math.round((major['言語知識'].c / major['言語知識'].t) * 60) : Math.round(rate * 60);
+  const read = major['読解'].t ? Math.round((major['読解'].c / major['読解'].t) * 60) : Math.round(rate * 60);
+  const listen = major['聴解'].t ? Math.round((major['聴解'].c / major['聴解'].t) * 60) : Math.round(rate * 60);
+  const totalScaled = lang + read + listen;
+  const passed = totalScaled >= 90 && lang >= 19 && read >= 19 && listen >= 19;
+  if (qz.mode !== 'retry') {
+    const old = state.history[qz.paper.id];
+    state.history[qz.paper.id] = { bestScaled: old ? Math.max(old.bestScaled, totalScaled) : totalScaled, bestPassed: old ? (old.bestPassed || passed) : passed };
+  }
+  saveState();
+  state.lastResult = { paper: qz.paper, totalCorrect, totalQuestions: qs.length, accuracy: Math.round(rate * 100), lang, read, listen, totalScaled, passed, cefr: getCefrLabel(totalScaled, passed), items, wrongItems };
+  state.resultFilter = wrongItems.length ? 'wrong' : 'all';
+  state.quiz = null; state.tab = 'result'; render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderResultView() {
+  const r = state.lastResult; if (!r) return '';
+  const list = state.resultFilter === 'wrong' ? r.wrongItems : r.items;
+  return `
+    <div class="space-y-4">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-24 h-24 rounded-full border-8 flex flex-col items-center justify-center shrink-0 ${r.passed ? 'border-emerald-500 bg-emerald-50 text-emerald-800' : 'border-rose-500 bg-rose-50 text-rose-800'}">
+            <div class="text-2xl font-extrabold">${r.totalScaled}</div><div class="text-[11px]">/180分</div>
+          </div>
+          <div>
+            <div class="flex flex-wrap gap-1.5 mb-1">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${r.passed?'bg-emerald-100 text-emerald-800':'bg-rose-100 text-rose-800'}">${r.passed?'✓ 预计合格':'✗ 未达合格线'}</span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800">${r.cefr}</span>
+            </div>
+            <h2 class="font-bold text-slate-900">${escapeHtml(r.paper.title)}</h2>
+            <p class="text-xs text-slate-600 mt-0.5">对 ${r.totalCorrect}/${r.totalQuestions} (${r.accuracy}%) · 错 ${r.wrongItems.length} 题 · 言語${r.lang}/読解${r.read}/聴解${r.listen}</p>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" onclick="switchTab('mistakes')" class="px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold">📕 错题集</button>
+          <button type="button" onclick="switchTab('predict')" class="px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-semibold">返回列表</button>
+        </div>
+      </div>
+      <div class="flex items-center justify-between bg-white rounded-xl border border-slate-200 p-3.5">
+        <h3 class="font-bold text-sm">🔍 错题与四选项知识点拆解</h3>
+        <div class="flex gap-1.5 text-xs">
+          <button type="button" onclick="state.resultFilter='wrong';render()" class="px-3 py-1.5 rounded-lg font-semibold ${state.resultFilter==='wrong'?'bg-rose-600 text-white':'bg-slate-100'}">仅错题(${r.wrongItems.length})</button>
+          <button type="button" onclick="state.resultFilter='all';render()" class="px-3 py-1.5 rounded-lg font-semibold ${state.resultFilter==='all'?'bg-indigo-600 text-white':'bg-slate-100'}">全部(${r.items.length})</button>
+        </div>
+      </div>
+      <div class="space-y-4">
+        ${list.map(i => renderDetailedQuestionCard({ q: i.q, indexLabel: `第 ${i.index} 题`, userChoice: i.userChoice, sourceLabel: i.isCorrect ? '答对' : '做错', isCorrect: i.isCorrect })).join('')}
+      </div>
+    </div>`;
+}
+
+function renderDetailedQuestionCard({ q, indexLabel, userChoice, sourceLabel, isCorrect = false, mistakeControls = null }) {
+  return `
+    <article class="bg-white rounded-2xl border-2 ${isCorrect ? 'border-emerald-200' : 'border-rose-200'} shadow-sm overflow-hidden">
+      <div class="px-4 py-2.5 flex flex-wrap justify-between gap-2 ${isCorrect ? 'bg-emerald-50/70' : 'bg-rose-50/70'} border-b border-slate-100 text-xs">
+        <div><span class="px-2 py-0.5 rounded font-bold text-white ${isCorrect?'bg-emerald-600':'bg-rose-600'}">${escapeHtml(indexLabel)}</span> <strong>${escapeHtml(q.section)} · ${escapeHtml(q.qType)}</strong></div>
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="px-2 py-0.5 rounded ${isCorrect?'bg-emerald-100 text-emerald-800':'bg-rose-100 text-rose-800'} font-bold">选：${userChoice===undefined?'未答':`选项${userChoice+1}`}</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-600 text-white font-bold">正：选项${q.answer+1}</span>
+          ${mistakeControls ? `<button type="button" onclick="toggleMistakeMastered('${mistakeControls.qId}')" class="px-2 py-0.5 rounded border bg-white">${mistakeControls.mastered?'✓已掌握':'标掌握'}</button><button type="button" onclick="deleteMistake('${mistakeControls.qId}')" class="text-slate-400">删</button>` : ''}
+        </div>
+      </div>
+      <div class="p-4 space-y-3">
+        ${q.section === '聴解' ? renderTtsPlayer(q, true) : ''}
+        ${q.passage ? `<div class="jp-text p-3 rounded-xl bg-amber-50/50 border border-amber-200 text-xs sm:text-sm whitespace-pre-line">${escapeHtml(q.passage)}</div>` : ''}
+        <div class="jp-text font-semibold text-slate-900">${renderStemHtml(q.stem)}</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+          ${q.options.map((opt, idx) => {
+            const isAns = idx === q.answer; const isW = !isAns && idx === userChoice;
+            return `<div class="p-3 rounded-xl border ${isAns?'border-emerald-400 bg-emerald-50/70':(isW?'border-rose-400 bg-rose-50/70':'border-slate-200 bg-slate-50/60')}">
+              <div class="flex justify-between gap-2 mb-1"><span class="jp-text font-bold text-sm">${idx+1}. ${renderStemHtml(opt.text)}</span><span class="px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${isAns?'bg-emerald-600 text-white':(isW?'bg-rose-600 text-white':'bg-slate-200 text-slate-600')}">${isAns?'✓正解':(isW?'✗误选':'干扰')}</span></div>
+              <div class="text-[11px] font-semibold text-indigo-700">考点：${escapeHtml(opt.tag||'')}</div>
+              <p class="text-xs text-slate-700 mt-0.5">${escapeHtml(opt.detail||'')}</p>
+            </div>`;
+          }).join('')}
+        </div>
+        ${q.explanation ? `<div class="p-3 rounded-xl bg-indigo-50/70 text-xs"><strong>💡 解析：</strong>${escapeHtml(q.explanation)}</div>` : ''}
+      </div>
+    </article>`;
+}
+
+function renderManageView() {
+  return `
+    <div class="space-y-4">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+        <h2 class="text-lg font-bold text-slate-900">⚙️ 题库导入 & 学习记录备份</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="p-4 rounded-xl bg-indigo-50/60 border border-indigo-200">
+            <div class="text-xs font-bold text-indigo-900">1. 导入 JSON 题库</div>
+            <div class="text-xs text-slate-600 mt-1">已导入：${state.customPapers.length} 套</div>
+            <button type="button" onclick="openImportModal(null)" class="mt-3 w-full py-2.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold">打开导入框</button>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div class="text-xs font-bold">2. 导出学习记录备份</div>
+            <div class="text-xs text-slate-600 mt-1">含错题与答题卡成绩</div>
+            <button type="button" onclick="exportAllBackup()" class="mt-3 w-full py-2.5 rounded-lg bg-slate-900 text-white text-xs font-semibold">⬇️ 导出备份</button>
+          </div>
+          <div class="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200">
+            <div class="text-xs font-bold text-emerald-900">3. 恢复其他设备备份</div>
+            <div class="text-xs text-slate-600 mt-1">导入备份 .json</div>
+            <div class="file-btn-wrap mt-3 w-full py-2.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold text-center">
+              <span>📂 选择备份文件</span>
+              <input type="file" class="file-btn-input" onchange="importAllBackup(event)" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl border border-rose-200 p-4 flex items-center justify-between">
+        <span class="text-sm font-bold text-rose-700">清空本地所有记录</span>
+        <button type="button" onclick="resetAllLocalData()" class="px-4 py-2 rounded-xl border border-rose-300 text-rose-600 text-xs font-semibold">一键清空</button>
+      </div>
+    </div>`;
+}
+
+function openImportModal(id) { state.importTargetId = id; document.getElementById('import-error').classList.add('hidden'); document.getElementById('json-textarea').value = ''; document.getElementById('import-modal').classList.remove('hidden'); }
+function closeImportModal() { document.getElementById('import-modal').classList.add('hidden'); }
+function handleJsonFileUpload(ev) { const f = ev.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => { document.getElementById('json-textarea').value = r.result; }; r.readAsText(f, 'UTF-8'); }
+function confirmImportJson() {
+  const raw = document.getElementById('json-textarea').value.trim(); const err = document.getElementById('import-error'); err.classList.add('hidden');
+  try {
+    const parsed = JSON.parse(raw); const list = Array.isArray(parsed) ? parsed : [parsed];
+    for (const p of list) {
+      if (!p.id || !p.title || !Array.isArray(p.questions) || !p.questions.length) throw new Error('格式需含 id/title/questions');
+      const i = state.customPapers.findIndex(x => x.id === p.id); if (i >= 0) state.customPapers[i] = p; else state.customPapers.push(p);
+    }
+    saveState(); closeImportModal(); render(); showToast(`✅ 成功导入 ${list.length} 套试卷！`);
+  } catch (e) { err.textContent = '导入失败：' + e.message; err.classList.remove('hidden'); }
+}
+function downloadJsonTemplate() { triggerDownload(JSON.stringify(BUILTIN_PAPERS[0], null, 2), 'jlpt-n2-sample.json'); }
+function exportAllBackup() {
+  triggerDownload(JSON.stringify({ exportedAt: new Date().toISOString(), customPapers: state.customPapers, mistakes: state.mistakes, history: state.history, pdfSheets: state.pdfSheets, pdfMistakes: state.pdfMistakes }, null, 2), `jlpt-n2-backup-${new Date().toISOString().slice(0,10)}.json`);
+}
+function importAllBackup(ev) {
+  const f = ev.target.files?.[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      if (d.customPapers) state.customPapers = d.customPapers;
+      if (d.mistakes) state.mistakes = d.mistakes;
+      if (d.history) state.history = d.history;
+      if (d.pdfSheets) state.pdfSheets = d.pdfSheets;
+      if (d.pdfMistakes) state.pdfMistakes = d.pdfMistakes;
+      saveState(); render(); showToast('✅ 已成功恢复全部备份记录！');
+    } catch (e) { showToast('备份文件格式有误：' + e.message, 3000); }
+  };
+  r.readAsText(f, 'UTF-8');
+}
+function triggerDownload(content, filename) {
+  const url = URL.createObjectURL(new Blob([content], { type: 'application/json;charset=utf-8' }));
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
+}
+function resetAllLocalData() {
+  if (!confirm('确定清空本地所有涂卡、错题与导入试卷吗？')) return;
+  state.customPapers = []; state.mistakes = {}; state.history = {}; state.pdfSheets = {}; state.pdfMistakes = {};
+  saveState(); render(); showToast('已清空全部本地记录');
+}
+
+async function refreshCachedKeys() {
+  state.cachedDbKeys = await dbListKeysSafe();
+  if (state.tab === 'archive') render();
+}
+
+// 立即同步首屏渲染，绝不等待 IndexedDB！
+render();
+refreshCachedKeys();
+</script>
+</body>
+</html>
